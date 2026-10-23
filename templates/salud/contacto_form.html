@@ -1,0 +1,38 @@
+{% extends "salud/_form_base.html" %}
+{% block form_fields %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Nombre completo <span class="text-red-500">*</span>
+        </label>
+        {{ form.nombre }}
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Teléfono principal <span class="text-red-500">*</span>
+        </label>
+        {{ form.telefono }}
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Teléfono alternativo
+        </label>
+        {{ form.telefono_alternativo }}
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Parentesco <span class="text-red-500">*</span>
+        </label>
+        {{ form.parentesco }}
+    </div>
+    <div class="flex items-end">
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+            {{ form.es_tutor_legal }} Es tutor legal
+        </label>
+    </div>
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+        {{ form.notas }}
+    </div>
+</div>
+{% endblock %}

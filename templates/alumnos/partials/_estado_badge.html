@@ -1,0 +1,13 @@
+{% if estado == 'ACTIVO' %}
+    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+        <i class="fa-solid fa-circle text-[6px]"></i> {{ label }}
+    </span>
+{% elif estado == 'INACTIVO' %}
+    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+        <i class="fa-solid fa-circle text-[6px]"></i> {{ label }}
+    </span>
+{% elif estado == 'CONGELADO' %}
+    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+        <i class="fa-solid fa-circle text-[6px]"></i> {{ label }}
+    </span>
+{% endif %}

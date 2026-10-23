@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ titulo }}</h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Los campos marcados con <span class="text-red-500">*</span> son obligatorios.
+            </p>
+        </div>
+        <a href="{% if staff %}{% url 'staff_detail' staff.pk %}{% else %}{% url 'staff_list' %}{% endif %}"
+           class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="p-3 bg-red-100 border border-red-200 text-red-800 rounded-lg text-sm">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <!-- CREDENCIALES -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-key text-blue-500"></i> Credenciales de acceso
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Usuario <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}<p class="text-xs text-red-600 mt-1">{{ form.username.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}<p class="text-xs text-red-600 mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+                </div>
+                {% if es_creacion %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Contraseña <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}<p class="text-xs text-red-600 mt-1">{{ form.password1.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Confirmar contraseña <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}<p class="text-xs text-red-600 mt-1">{{ form.password2.errors.0 }}</p>{% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- DATOS PERSONALES -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-user text-blue-500"></i> Datos personales
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                    {{ form.first_name }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+                    {{ form.last_name }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    {{ form.telefono }}
+                </div>
+            </div>
+            <div class="mt-4 flex items-center gap-4">
+                <div>
+                    {% if staff and staff.foto_perfil %}
+                    <img src="{{ staff.foto_perfil.url }}" id="foto-preview"
+                         class="w-20 h-20 rounded-full object-cover border-2 border-gray-200">
+                    {% else %}
+                    <div id="foto-preview"
+                         class="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-2xl">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Foto de perfil</label>
+                    {{ form.foto_perfil }}
+                    <p class="text-xs text-gray-500 mt-1">Máx 5 MB · JPG, PNG, WEBP</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROL Y CINTURÓN -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-medal text-amber-500"></i> Rol y cinturón
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Rol <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.role }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Cinturón <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.cinturon_actual }}
+                    {% if form.cinturon_actual.errors %}<p class="text-xs text-red-600 mt-1">{{ form.cinturon_actual.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Grados</label>
+                    {{ form.grados_cinturon }}
+                </div>
+            </div>
+            <div class="mt-4 p-3 bg-amber-50 border-l-4 border-amber-400 rounded text-xs text-amber-800">
+                <p class="font-semibold mb-1"><i class="fa-solid fa-info-circle"></i> Jerarquía por cinturón</p>
+                <ul class="space-y-0.5 ml-4">
+                    <li>🔵 <strong>Azul</strong> → Monitor (asistente)</li>
+                    <li>🟣 <strong>Morado</strong> → Instructor (puede dictar clases)</li>
+                    <li>🟤 <strong>Marrón</strong> → Instructor Avanzado</li>
+                    <li>⚫ <strong>Negro</strong> → Profesor (puede graduar)</li>
+                </ul>
+                <p class="mt-2 italic">⚠️ Cinturón blanco no puede ser instructor.</p>
+            </div>
+        </div>
+
+        <!-- PERFIL DE INSTRUCTOR -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-id-badge text-purple-500"></i> Perfil de instructor
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Inicio como instructor</label>
+                    {{ form.fecha_inicio_ensenanza }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Profesor mentor</label>
+                    {{ form.profesor_mentor }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Especialidades</label>
+                    {{ form.especialidades }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Disponibilidad</label>
+                    {{ form.horario_disponible }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Biografía</label>
+                    {{ form.biografia }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Certificaciones</label>
+                    {{ form.certificaciones }}
+                </div>
+            </div>
+        </div>
+
+        <!-- ESTADO -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <label class="flex items-center gap-2 text-sm">
+                {{ form.activo }}
+                <span class="font-medium">Cuenta activa</span>
+                <span class="text-xs text-gray-500">
+                    (desmarcar para suspender el acceso)
+                </span>
+            </label>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="flex justify-end gap-3 pt-2">
+            <a href="{% if staff %}{% url 'staff_detail' staff.pk %}{% else %}{% url 'staff_list' %}{% endif %}"
+               class="btn-secondary">Cancelar</a>
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-save"></i> {{ accion }}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Preview de foto
+    const input = document.getElementById('id_foto_perfil');
+    const preview = document.getElementById('foto-preview');
+    if (input && preview) {
+        input.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                if (preview.tagName === 'IMG') {
+                    preview.src = ev.target.result;
+                } else {
+                    const img = document.createElement('img');
+                    img.id = 'foto-preview';
+                    img.className = 'w-20 h-20 rounded-full object-cover border-2 border-gray-200';
+                    img.src = ev.target.result;
+                    preview.replaceWith(img);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Alerta en tiempo real cuando cambia el cinturón
+    const cinturonSelect = document.getElementById('id_cinturon_actual');
+    const roleSelect = document.getElementById('id_role');
+    if (cinturonSelect && roleSelect) {
+        const check = () => {
+            if (roleSelect.value === 'INSTRUCTOR' && cinturonSelect.value === 'BLANCO') {
+                alert('⚠️ Un instructor debe tener cinturón azul o superior.');
+            }
+        };
+        cinturonSelect.addEventListener('change', check);
+    }
+});
+</script>
+{% endblock %}

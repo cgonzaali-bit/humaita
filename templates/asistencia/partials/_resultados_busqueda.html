@@ -1,0 +1,34 @@
+{% if alumnos %}
+<div class="space-y-2">
+    {% for alumno in alumnos %}
+    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+        <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
+            {{ alumno.nombre|first }}{{ alumno.apellido|first }}
+        </div>
+        <div class="flex-1">
+            <p class="font-medium text-sm">{{ alumno.nombre }} {{ alumno.apellido }}</p>
+            <p class="text-xs text-gray-500">
+                {{ alumno.rut }} · {{ alumno.get_cinturon_actual_display }} ({{ alumno.grados_cinturon }}º)
+            </p>
+        </div>
+        {% if alumno.pk in presentes_ids %}
+        <span class="text-xs px-3 py-1.5 bg-green-100 text-green-700 rounded-full font-medium">
+            <i class="fa-solid fa-check"></i> Presente
+        </span>
+        {% else %}
+        <button hx-post="{% url 'marcar_presente' alumno.pk %}"
+                hx-vals='{"clase_id": "{{ clase.pk }}", "fecha": "{{ fecha|date:"Y-m-d" }}"}'
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-on::after-request="window.location.reload()"
+                class="btn-primary text-xs">
+            <i class="fa-solid fa-check"></i> Marcar presente
+        </button>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-sm text-gray-400 italic text-center py-4">
+    Sin resultados para esa búsqueda.
+</p>
+{% endif %}

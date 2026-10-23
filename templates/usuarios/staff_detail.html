@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% block title %}{{ staff.get_full_name|default:staff.username }} · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="shrink-0">
+                {% if staff.foto_perfil %}
+                <img src="{{ staff.foto_perfil.url }}"
+                     class="w-28 h-28 rounded-full object-cover border-4 border-amber-400 shadow">
+                {% else %}
+                <div class="w-28 h-28 rounded-full bg-slate-200 flex items-center justify-center text-4xl font-bold text-slate-500 border-4 border-amber-400">
+                    {{ staff.first_name|first }}{{ staff.last_name|first }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <div class="flex flex-wrap justify-between items-start gap-3">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            {{ staff.get_full_name|default:staff.username }}
+                        </h1>
+                        <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600">
+                            <span><i class="fa-solid fa-at"></i> {{ staff.username }}</span>
+                            {% if staff.email %}
+                            <span><i class="fa-solid fa-envelope"></i> {{ staff.email }}</span>
+                            {% endif %}
+                            {% if staff.telefono %}
+                            <span><i class="fa-solid fa-phone"></i> {{ staff.telefono }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                                {% if staff.role == 'SUPER_ADMIN' %}bg-slate-900 text-white
+                                {% elif staff.role == 'ADMIN' %}bg-blue-100 text-blue-700
+                                {% else %}bg-purple-100 text-purple-700{% endif %}">
+                                {{ staff.get_role_display }}
+                            </span>
+                            {% if staff.cinturon_actual != 'BLANCO' %}
+                            <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                                {% if staff.cinturon_actual == 'AZUL' %}bg-blue-500 text-white
+                                {% elif staff.cinturon_actual == 'MORADO' %}bg-purple-500 text-white
+                                {% elif staff.cinturon_actual == 'MARRON' %}bg-amber-800 text-white
+                                {% else %}bg-black text-white{% endif %}">
+                                <i class="fa-solid fa-medal"></i>
+                                {{ staff.get_cinturon_actual_display }} {{ staff.grados_cinturon }}º
+                            </span>
+                            {% endif %}
+                            {% if staff.nivel_instructor %}
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                <i class="fa-solid fa-award"></i> {{ staff.nivel_instructor_display }}
+                            </span>
+                            {% endif %}
+                            {% if staff.activo %}
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                                <i class="fa-solid fa-circle text-[6px]"></i> Activo
+                            </span>
+                            {% else %}
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                <i class="fa-solid fa-pause"></i> Inactivo
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        {% if user.es_admin %}
+                        <a href="{% url 'staff_update' staff.pk %}" class="btn-secondary">
+                            <i class="fa-solid fa-pen"></i> Editar
+                        </a>
+                        {% endif %}
+                        {% if user.es_super_admin and staff.pk != user.pk %}
+                        <form method="post" action="{% url 'staff_toggle_activo' staff.pk %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-secondary">
+                                {% if staff.activo %}
+                                <i class="fa-solid fa-pause"></i> Desactivar
+                                {% else %}
+                                <i class="fa-solid fa-play"></i> Activar
+                                {% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if staff.puede_graduar %}
+        <div class="mt-4 p-3 bg-amber-50 border-l-4 border-amber-500 rounded">
+            <p class="text-sm text-amber-800">
+                <i class="fa-solid fa-certificate"></i>
+                <strong>Autorizado para otorgar cinturones</strong>
+                (Cinturón negro)
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Grid de contenido -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Info principal -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Perfil de instructor -->
+            {% if staff.nivel_instructor or staff.biografia or staff.especialidades %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-id-badge text-purple-500"></i>
+                    Perfil de instructor
+                </h2>
+                <dl class="space-y-3 text-sm">
+                    {% if staff.fecha_inicio_ensenanza %}
+                    <div class="flex justify-between border-b border-dashed py-1.5">
+                        <dt class="text-gray-500">Enseñando desde</dt>
+                        <dd class="font-medium">
+                            {{ staff.fecha_inicio_ensenanza|date:"d/m/Y" }}
+                            {% if staff.anios_ensenando %}
+                            <span class="text-xs text-gray-500">
+                                ({{ staff.anios_ensenando }} años)
+                            </span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    {% endif %}
+                    {% if staff.profesor_mentor %}
+                    <div class="flex justify-between border-b border-dashed py-1.5">
+                        <dt class="text-gray-500">Profesor mentor</dt>
+                        <dd class="font-medium">
+                            <a href="{% url 'staff_detail' staff.profesor_mentor.pk %}"
+                               class="text-blue-600 hover:underline">
+                                {{ staff.profesor_mentor.get_full_name|default:staff.profesor_mentor.username }}
+                            </a>
+                        </dd>
+                    </div>
+                    {% endif %}
+                    {% if staff.especialidades %}
+                    <div class="border-b border-dashed py-1.5">
+                        <dt class="text-gray-500 mb-1">Especialidades</dt>
+                        <dd class="flex flex-wrap gap-1">
+                            {% for esp in staff.especialidades.split %}
+                            <span class="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
+                                {{ esp|cut:"," }}
+                            </span>
+                            {% endfor %}
+                        </dd>
+                    </div>
+                    {% endif %}
+                    {% if staff.horario_disponible %}
+                    <div class="flex justify-between border-b border-dashed py-1.5">
+                        <dt class="text-gray-500">Disponibilidad</dt>
+                        <dd class="font-medium">{{ staff.horario_disponible }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+                {% if staff.biografia %}
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Biografía</p>
+                    <p class="text-sm text-gray-700">{{ staff.biografia|linebreaks }}</p>
+                </div>
+                {% endif %}
+                {% if staff.certificaciones %}
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Certificaciones</p>
+                    <p class="text-sm text-gray-700">{{ staff.certificaciones|linebreaks }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Clases asignadas -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-blue-500"></i>
+                    Clases asignadas ({{ clases.count }})
+                </h2>
+                {% if clases %}
+                <div class="space-y-2">
+                    {% for c in clases %}
+                    <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div>
+                            <p class="font-medium text-sm">{{ c.nombre }}</p>
+                            <p class="text-xs text-gray-500">
+                                {{ c.get_dia_semana_display }} ·
+                                {{ c.hora_inicio|time:"H:i" }}–{{ c.hora_fin|time:"H:i" }}
+                                · {{ c.get_categoria_display }}
+                            </p>
+                        </div>
+                        <a href="{% url 'check_in' %}?clase_id={{ c.pk }}"
+                           class="text-xs text-blue-600 hover:underline">
+                            Check-in →
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400 italic text-center py-4">
+                    Sin clases asignadas.
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Promociones otorgadas -->
+            {% if promociones_otorgadas %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-medal text-amber-500"></i>
+                    Promociones otorgadas (últimas 10)
+                </h2>
+                <div class="space-y-2">
+                    {% for p in promociones_otorgadas %}
+                    <div class="flex items-center justify-between p-2 border-b border-dashed text-sm">
+                        <div>
+                            <a href="{% url 'student_detail' p.alumno.pk %}"
+                               class="font-medium hover:text-blue-600">
+                                {{ p.alumno.apellido }}, {{ p.alumno.nombre }}
+                            </a>
+                            <p class="text-xs text-gray-500">
+                                {{ p.get_cinturon_anterior_display }} →
+                                {{ p.get_cinturon_nuevo_display }} ({{ p.grados }}º)
+                            </p>
+                        </div>
+                        <span class="text-xs text-gray-500">
+                            {{ p.fecha_promocion|date:"d/m/Y" }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Alumnos formados -->
+            {% if alumnos_formados %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-green-500"></i>
+                    Alumnos formados ({{ alumnos_formados.count }})
+                </h2>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                    {% for a in alumnos_formados %}
+                    <a href="{% url 'staff_detail' a.pk %}"
+                       class="block p-2 hover:bg-gray-50 rounded text-sm">
+                        {{ a.get_full_name|default:a.username }}
+                        <span class="text-xs text-gray-500 block">
+                            {{ a.get_cinturon_actual_display }}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Acciones admin -->
+            {% if user.es_super_admin %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="font-semibold text-gray-800 mb-3">Acciones administrativas</h2>
+                <div class="space-y-2">
+                    <form method="post" action="{% url 'staff_reset_password' staff.pk %}"
+                          onsubmit="return confirm('¿Enviar email de restablecimiento de contraseña?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-secondary w-full justify-center text-sm">
+                            <i class="fa-solid fa-key"></i> Resetear contraseña
+                        </button>
+                    </form>
+                    {% if staff.pk != user.pk %}
+                    <form method="post" action="{% url 'staff_delete' staff.pk %}"
+                          onsubmit="return confirm('¿ELIMINAR permanentemente a {{ staff.get_full_name|escapejs }}? Esta acción no se puede deshacer.')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-danger w-full justify-center text-sm">
+                            <i class="fa-solid fa-trash"></i> Eliminar del staff
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Meta info -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="font-semibold text-gray-800 mb-3">Información de cuenta</h2>
+                <dl class="space-y-2 text-xs">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Fecha de registro</dt>
+                        <dd class="font-medium">{{ staff.date_joined|date:"d/m/Y" }}</dd>
+                    </div>
+                    {% if staff.ultimo_acceso %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Último acceso</dt>
+                        <dd class="font-medium">{{ staff.ultimo_acceso|date:"d/m/Y H:i" }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

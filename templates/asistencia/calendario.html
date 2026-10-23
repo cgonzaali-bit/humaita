@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Calendario · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold flex items-center gap-2">
+        <i class="fa-solid fa-calendar-days text-blue-500"></i> Calendario semanal
+    </h1>
+    <div class="flex gap-2">
+        <a href="{% url 'check_in' %}" class="btn-primary">
+            <i class="fa-solid fa-check-to-slot"></i> Check-in rápido
+        </a>
+        {% if user.es_admin %}
+        <a href="{% url 'clase_create' %}" class="btn-secondary">
+            <i class="fa-solid fa-plus"></i> Nueva clase
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+    {% for dia, clases in clases_por_dia.items %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+        <h3 class="font-semibold text-sm text-center border-b border-gray-100 pb-2 mb-3 text-gray-800">
+            {{ dia }}
+        </h3>
+        {% if clases %}
+        <div class="space-y-2">
+            {% for clase in clases %}
+            <a href="{% url 'check_in' %}?clase_id={{ clase.pk }}"
+               class="block p-2 rounded-lg border border-blue-100 bg-blue-50 hover:bg-blue-100 transition">
+                <p class="font-medium text-xs text-blue-900">{{ clase.nombre }}</p>
+                <p class="text-xs text-blue-600 mt-1">
+                    {{ clase.hora_inicio|time:"H:i" }} – {{ clase.hora_fin|time:"H:i" }}
+                </p>
+                {% if clase.instructor %}
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fa-solid fa-user"></i> {{ clase.instructor.get_full_name|default:clase.instructor.username|truncatechars:15 }}
+                </p>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-xs text-gray-400 italic text-center py-4">Sin clases</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="mt-6 flex justify-end">
+    <a href="{% url 'asistencia_historial' %}" class="btn-secondary text-sm">
+        <i class="fa-solid fa-clock-rotate-left"></i> Ver historial
+    </a>
+</div>
+{% endblock %}

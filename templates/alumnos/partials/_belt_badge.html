@@ -1,0 +1,21 @@
+{% if cinturon == 'BLANCO' %}
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-300">
+        <i class="fa-solid fa-medal text-gray-400"></i> Blanco {{ grados }}º
+    </span>
+{% elif cinturon == 'AZUL' %}
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-blue-500 text-white">
+        <i class="fa-solid fa-medal"></i> Azul {{ grados }}º
+    </span>
+{% elif cinturon == 'MORADO' %}
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-purple-500 text-white">
+        <i class="fa-solid fa-medal"></i> Morado {{ grados }}º
+    </span>
+{% elif cinturon == 'MARRON' %}
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-amber-800 text-white">
+        <i class="fa-solid fa-medal"></i> Marrón {{ grados }}º
+    </span>
+{% elif cinturon == 'NEGRO' %}
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-black text-white">
+        <i class="fa-solid fa-medal text-amber-400"></i> Negro {{ grados }}º
+    </span>
+{% endif %}

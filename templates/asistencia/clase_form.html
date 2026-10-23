@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">{{ titulo }}</h1>
+    <form method="post" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium mb-1">Nombre *</label>
+                {{ form.nombre }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Día *</label>
+                {{ form.dia_semana }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Categoría</label>
+                {{ form.categoria }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Hora inicio *</label>
+                {{ form.hora_inicio }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Hora fin *</label>
+                {{ form.hora_fin }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Instructor</label>
+                {{ form.instructor }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Cupo máximo</label>
+                {{ form.cupo_maximo }}
+            </div>
+            <div class="md:col-span-2">
+                <label class="flex items-center gap-2 text-sm">{{ form.activo }} Activo</label>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t">
+            <a href="{% url 'clase_list' %}" class="btn-secondary">Cancelar</a>
+            <button class="btn-primary"><i class="fa-solid fa-save"></i> Guardar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

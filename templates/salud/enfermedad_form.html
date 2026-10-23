@@ -1,0 +1,33 @@
+{% extends "salud/_form_base.html" %}
+{% block form_fields %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Nombre <span class="text-red-500">*</span>
+        </label>
+        {{ form.nombre }}
+        {% if form.nombre.errors %}<p class="text-xs text-red-600 mt-1">{{ form.nombre.errors.0 }}</p>{% endif %}
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Gravedad</label>
+        {{ form.gravedad }}
+    </div>
+    <div class="flex items-end">
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+            {{ form.activa }} Enfermedad activa
+        </label>
+    </div>
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        {{ form.descripcion }}
+    </div>
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tratamiento</label>
+        {{ form.tratamiento }}
+    </div>
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Medicamentos</label>
+        {{ form.medicamentos }}
+    </div>
+</div>
+{% endblock %}

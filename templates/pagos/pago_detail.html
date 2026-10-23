@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Pago {{ pago.numero_recibo|default:pago.pk }} · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">
+                Pago {{ pago.numero_recibo|default:"—" }}
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                {{ pago.alumno.apellido }}, {{ pago.alumno.nombre }} · {{ pago.periodo_display }}
+            </p>
+        </div>
+        <div class="flex gap-2">
+            {% if pago.estado == 'PAGADO' %}
+            <a href="{% url 'pago_recibo_pdf' pago.pk %}" target="_blank" class="btn-secondary">
+                <i class="fa-solid fa-file-pdf"></i> Ver recibo
+            </a>
+            {% else %}
+            <form method="post" action="{% url 'pago_marcar_pagado' pago.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary bg-green-600 hover:bg-green-700">
+                    <i class="fa-solid fa-check"></i> Marcar como pagado
+                </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'pago_update' pago.pk %}" class="btn-secondary">
+                <i class="fa-solid fa-pen"></i> Editar
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+            <span class="px-3 py-1 rounded-full text-sm font-medium
+                {% if pago.estado == 'PAGADO' %}bg-green-100 text-green-700
+                {% elif pago.estado == 'PENDIENTE' %}bg-amber-100 text-amber-700
+                {% elif pago.estado == 'ATRASADO' %}bg-red-100 text-red-700
+                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                {{ pago.get_estado_display }}
+            </span>
+            <span class="text-3xl font-bold text-gray-900">${{ pago.monto_final|floatformat:0 }}</span>
+        </div>
+
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+                <dt class="text-gray-500">Alumno</dt>
+                <dd class="font-medium">
+                    <a href="{% url 'student_detail' pago.alumno.pk %}" class="text-blue-600 hover:underline">
+                        {{ pago.alumno.nombre }} {{ pago.alumno.apellido }}
+                    </a>
+                </dd>
+            </div>
+            <div>
+                <dt class="text-gray-500">Plan</dt>
+                <dd class="font-medium">{{ pago.plan.nombre|default:"—" }}</dd>
+            </div>
+            <div>
+                <dt class="text-gray-500">Período</dt>
+                <dd class="font-medium">{{ pago.periodo_display }}</dd>
+            </div>
+            <div>
+                <dt class="text-gray-500">Monto base</dt>
+                <dd class="font-medium">${{ pago.monto|floatformat:0 }}</dd>
+            </div>
+            {% if pago.descuento > 0 %}
+            <div>
+                <dt class="text-gray-500">Descuento</dt>
+                <dd class="font-medium text-green-600">-${{ pago.descuento|floatformat:0 }}</dd>
+            </div>
+            {% endif %}
+            <div>
+                <dt class="text-gray-500">Método de pago</dt>
+                <dd class="font-medium">{{ pago.get_metodo_pago_display|default:"—" }}</dd>
+            </div>
+            <div>
+                <dt class="text-gray-500">Fecha de pago</dt>
+                <dd class="font-medium">{{ pago.fecha_pago|date:"d/m/Y"|default:"—" }}</dd>
+            </div>
+            <div>
+                <dt class="text-gray-500">Vencimiento</dt>
+                <dd class="font-medium">{{ pago.fecha_vencimiento|date:"d/m/Y"|default:"—" }}</dd>
+            </div>
+            {% if pago.referencia %}
+            <div class="md:col-span-2">
+                <dt class="text-gray-500">Referencia</dt>
+                <dd class="font-medium">{{ pago.referencia }}</dd>
+            </div>
+            {% endif %}
+            {% if pago.observaciones %}
+            <div class="md:col-span-2">
+                <dt class="text-gray-500">Observaciones</dt>
+                <dd class="text-gray-700">{{ pago.observaciones }}</dd>
+            </div>
+            {% endif %}
+            <div>
+                <dt class="text-gray-500">Registrado por</dt>
+                <dd class="font-medium">
+                    {{ pago.registrado_por.get_full_name|default:pago.registrado_por.username|default:"—" }}
+                </dd>
+            </div>
+            <div>
+                <dt class="text-gray-500">Creado</dt>
+                <dd class="font-medium">{{ pago.creado_en|date:"d/m/Y H:i" }}</dd>
+            </div>
+        </dl>
+
+        {% if user.es_admin %}
+        <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+            <form method="post" action="{% url 'pago_delete' pago.pk %}"
+                  onsubmit="return confirm('¿Eliminar este pago? Esta acción no se puede deshacer.')">
+                {% csrf_token %}
+                <button type="submit" class="text-sm text-red-600 hover:underline">
+                    <i class="fa-solid fa-trash"></i> Eliminar pago
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

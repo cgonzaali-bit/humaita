@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">Estadísticas de asistencia</h1>
+        <p class="text-sm text-gray-500 mt-1">
+            {{ alumno.nombre }} {{ alumno.apellido }} · {{ alumno.rut }}
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Total histórico</p>
+            <p class="text-3xl font-bold text-gray-900 mt-1">{{ total }}</p>
+            <p class="text-xs text-gray-500 mt-1">asistencias</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Últimos 90 días</p>
+            <p class="text-3xl font-bold text-green-600 mt-1">{{ recientes }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Clases frecuentes</p>
+            <p class="text-3xl font-bold text-blue-600 mt-1">{{ por_clase|length }}</p>
+        </div>
+    </div>
+
+    {% if por_clase %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+        <h2 class="font-semibold mb-3">Asistencias por clase</h2>
+        <div class="space-y-2">
+            {% for c in por_clase %}
+            <div class="flex items-center justify-between border-b border-dashed py-2">
+                <span class="text-sm">{{ c.clase__nombre }}</span>
+                <span class="text-sm font-semibold">{{ c.total }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h2 class="font-semibold mb-3">Últimas asistencias</h2>
+        {% if ultimas %}
+        <div class="space-y-1">
+            {% for a in ultimas %}
+            <div class="flex items-center justify-between border-b border-dashed py-2 text-sm">
+                <span>{{ a.fecha|date:"d/m/Y" }}</span>
+                <span class="text-gray-600">{{ a.clase.nombre }}</span>
+                <span class="text-xs px-2 py-0.5 rounded-full
+                    {% if a.presente %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                    {% if a.presente %}Presente{% else %}Ausente{% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-400 italic text-center py-4">Sin registros.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

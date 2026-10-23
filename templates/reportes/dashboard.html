@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard · Armylock{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-gauge-high text-blue-600"></i> Dashboard
+    </h1>
+    <p class="text-sm text-gray-500 mt-1">
+        {{ hoy|date:"l, d \d\e F \d\e Y" }} · Resumen general de la academia
+    </p>
+</div>
+
+<!-- KPIs principales -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Alumnos activos</p>
+            <i class="fa-solid fa-users text-blue-500"></i>
+        </div>
+        <p class="text-3xl font-bold text-gray-900">{{ total_activos }}</p>
+        <p class="text-xs mt-1">
+            <span class="text-green-600"><i class="fa-solid fa-arrow-up"></i> +{{ nuevos_mes }}</span>
+            <span class="text-gray-500">este mes</span>
+        </p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Recaudado {{ mes_nombre }}</p>
+            <i class="fa-solid fa-dollar-sign text-green-500"></i>
+        </div>
+        <p class="text-3xl font-bold text-green-600">${{ total_cobrado|floatformat:0 }}</p>
+        <p class="text-xs mt-1">
+            <span class="text-amber-600">${{ total_pendiente|floatformat:0 }} pendiente</span>
+        </p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 {% if pagos_atrasados_count > 0 %}border-l-4 border-red-500{% endif %}">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Pagos atrasados</p>
+            <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+        </div>
+        <p class="text-3xl font-bold {% if pagos_atrasados_count > 0 %}text-red-600{% else %}text-gray-900{% endif %}">
+            {{ pagos_atrasados_count }}
+        </p>
+        <p class="text-xs mt-1">
+            <span class="text-red-600">${{ total_atrasado|floatformat:0 }}</span>
+            <a href="{% url 'morosos' %}" class="text-blue-600 hover:underline">ver →</a>
+        </p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Tasa asistencia (30d)</p>
+            <i class="fa-solid fa-check-to-slot text-purple-500"></i>
+        </div>
+        <p class="text-3xl font-bold text-purple-600">{{ tasa_asistencia }}%</p>
+        <p class="text-xs mt-1 text-gray-500">{{ asistencias_mes }} este mes</p>
+    </div>
+</div>
+
+<!-- Salud y certificados -->
+{% if certificados_vencidos or certificados_por_vencer or lesiones_activas or alergias_graves %}
+<div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+    <h2 class="font-semibold text-red-800 flex items-center gap-2 mb-3">
+        <i class="fa-solid fa-heart-pulse"></i> Alertas de salud
+    </h2>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {% if certificados_vencidos %}
+        <a href="{% url 'health_dashboard' %}" class="bg-white rounded-lg p-3 border border-red-200 hover:shadow">
+            <p class="text-xs text-gray-500">Certificados vencidos</p>
+            <p class="text-2xl font-bold text-red-600">{{ certificados_vencidos }}</p>
+        </a>
+        {% endif %}
+        {% if certificados_por_vencer %}
+        <a href="{% url 'health_dashboard' %}" class="bg-white rounded-lg p-3 border border-amber-200 hover:shadow">
+            <p class="text-xs text-gray-500">Por vencer (30d)</p>
+            <p class="text-2xl font-bold text-amber-600">{{ certificados_por_vencer }}</p>
+        </a>
+        {% endif %}
+        {% if lesiones_activas %}
+        <a href="{% url 'health_dashboard' %}" class="bg-white rounded-lg p-3 border border-orange-200 hover:shadow">
+            <p class="text-xs text-gray-500">Lesiones activas</p>
+            <p class="text-2xl font-bold text-orange-600">{{ lesiones_activas }}</p>
+        </a>
+        {% endif %}
+        {% if alergias_graves %}
+        <a href="{% url 'health_dashboard' %}" class="bg-white rounded-lg p-3 border border-red-300 hover:shadow">
+            <p class="text-xs text-gray-500">Alergias graves</p>
+            <p class="text-2xl font-bold text-red-700">{{ alergias_graves }}</p>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Gráficos -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h2 class="font-semibold text-gray-800 mb-4">Recaudación últimos 6 meses</h2>
+        <canvas id="chartRecaudacion" height="80"></canvas>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h2 class="font-semibold text-gray-800 mb-4">Alumnos por cinturón</h2>
+        <canvas id="chartCinturones" height="180"></canvas>
+    </div>
+</div>
+
+<!-- Asistencia + Eventos -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h2 class="font-semibold text-gray-800 mb-4">Asistencia últimos 7 días</h2>
+        <canvas id="chartAsistencia" height="100"></canvas>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100 flex justify-between">
+            <h2 class="font-semibold text-gray-800">Próximos eventos</h2>
+            <a href="{% url 'evento_list' %}" class="text-xs text-blue-600 hover:underline">Ver todos →</a>
+        </div>
+        <div class="p-2 max-h-72 overflow-y-auto">
+            {% if eventos_proximos %}
+                {% for e in eventos_proximos %}
+                <a href="{% url 'evento_detail' e.pk %}"
+                   class="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium">{{ e.nombre }}</p>
+                        <p class="text-xs text-gray-500">{{ e.get_tipo_display }} · {{ e.fecha|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <span class="text-xs text-gray-500">{{ e.total_inscritos }} insc.</span>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-center text-sm text-gray-400 italic py-8">Sin eventos próximos</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Pagos recientes + Vencimientos -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100">
+            <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-receipt text-green-500"></i> Pagos recientes
+            </h2>
+        </div>
+        <div class="p-2">
+            {% for p in pagos_recientes %}
+            <a href="{% url 'pago_detail' p.pk %}"
+               class="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg">
+                <div>
+                    <p class="text-sm font-medium">{{ p.alumno.apellido }}, {{ p.alumno.nombre }}</p>
+                    <p class="text-xs text-gray-500">{{ p.periodo_display }}</p>
+                </div>
+                <span class="text-sm font-semibold text-green-600">${{ p.monto_final|floatformat:0 }}</span>
+            </a>
+            {% empty %}
+            <p class="text-center text-sm text-gray-400 italic py-4">Sin pagos recientes</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100">
+            <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-clock text-amber-500"></i> Próximos vencimientos
+            </h2>
+        </div>
+        <div class="p-2">
+            {% for p in proximos_vencimientos %}
+            <a href="{% url 'pago_detail' p.pk %}"
+               class="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg">
+                <div>
+                    <p class="text-sm font-medium">{{ p.alumno.apellido }}, {{ p.alumno.nombre }}</p>
+                    <p class="text-xs text-gray-500">{{ p.fecha_vencimiento|date:"d/m/Y" }}</p>
+                </div>
+                <span class="text-sm font-semibold">${{ p.monto_final|floatformat:0 }}</span>
+            </a>
+            {% empty %}
+            <p class="text-center text-sm text-gray-400 italic py-4">Sin vencimientos próximos</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Recaudación
+new Chart(document.getElementById('chartRecaudacion'), {
+    type: 'bar',
+    data: {
+        labels: {{ recaudacion_6m|safe }}.map(d => d.label),
+        datasets: [{
+            label: 'Recaudación',
+            data: {{ recaudacion_6m|safe }}.map(d => d.total),
+            backgroundColor: '#10b981',
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { callback: v => '$' + v.toLocaleString('es-CL') }
+            }
+        }
+    }
+});
+
+// Cinturones
+new Chart(document.getElementById('chartCinturones'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Blanco', 'Azul', 'Morado', 'Marrón', 'Negro'],
+        datasets: [{
+            data: [
+                {{ alumnos_por_cinturon.BLANCO }},
+                {{ alumnos_por_cinturon.AZUL }},
+                {{ alumnos_por_cinturon.MORADO }},
+                {{ alumnos_por_cinturon.MARRON }},
+                {{ alumnos_por_cinturon.NEGRO }}
+            ],
+            backgroundColor: ['#f3f4f6', '#3b82f6', '#8b5cf6', '#78350f', '#000000'],
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }
+    }
+});
+
+// Asistencia
+new Chart(document.getElementById('chartAsistencia'), {
+    type: 'line',
+    data: {
+        labels: {{ asistencia_7d|safe }}.map(d => d.label),
+        datasets: [{
+            label: 'Asistencias',
+            data: {{ asistencia_7d|safe }}.map(d => d.total),
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            tension: 0.3,
+            fill: true,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+</script>
+{% endblock %}

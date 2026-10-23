@@ -1,0 +1,36 @@
+{% extends "salud/_form_base.html" %}
+{% block form_fields %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Tipo <span class="text-red-500">*</span>
+        </label>
+        {{ form.tipo }}
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Severidad <span class="text-red-500">*</span>
+        </label>
+        {{ form.severidad }}
+    </div>
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Descripción <span class="text-red-500">*</span>
+        </label>
+        {{ form.descripcion }}
+        {% if form.descripcion.errors %}<p class="text-xs text-red-600 mt-1">{{ form.descripcion.errors.0 }}</p>{% endif %}
+    </div>
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tratamiento</label>
+        {{ form.tratamiento }}
+    </div>
+    <div class="md:col-span-2 flex flex-wrap gap-6">
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+            {{ form.requiere_epipen }} Requiere EpiPen
+        </label>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+            {{ form.activa }} Alergia activa
+        </label>
+    </div>
+</div>
+{% endblock %}

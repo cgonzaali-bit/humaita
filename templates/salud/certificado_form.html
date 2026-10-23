@@ -1,0 +1,50 @@
+{% extends "salud/_form_base.html" %}
+{% block form_fields %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Archivo (PDF o imagen) <span class="text-red-500">*</span>
+        </label>
+        {{ form.archivo }}
+        <p class="text-xs text-gray-500 mt-1">Máx. 10 MB. Formatos: PDF, JPG, PNG.</p>
+        {% if certificado %}
+        <p class="text-xs text-blue-600 mt-1">
+            Archivo actual:
+            <a href="{{ certificado.archivo.url }}" target="_blank" class="underline">
+                Ver / Descargar
+            </a>
+        </p>
+        {% endif %}
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Fecha de emisión <span class="text-red-500">*</span>
+        </label>
+        {{ form.fecha_emision }}
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Fecha de vencimiento <span class="text-red-500">*</span>
+        </label>
+        {{ form.fecha_vencimiento }}
+        {% if form.fecha_vencimiento.errors %}<p class="text-xs text-red-600 mt-1">{{ form.fecha_vencimiento.errors.0 }}</p>{% endif %}
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Médico</label>
+        {{ form.medico }}
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">N° de registro</label>
+        {{ form.numero_registro }}
+    </div>
+    <div class="md:col-span-2">
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+            {{ form.apto_para_competir }} Apto para competir
+        </label>
+    </div>
+    <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+        {{ form.observaciones }}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Reportes · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-chart-line text-blue-600"></i> Reportes
+    </h1>
+    <p class="text-sm text-gray-500 mt-1">
+        Reportes avanzados y exportables de la academia.
+    </p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+    <a href="{% url 'reporte_alumnos' %}"
+       class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="font-semibold text-gray-900">Listado de alumnos</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                    Todos los alumnos con datos completos, filtros por estado, cinturón y categoría.
+                </p>
+                <p class="text-xs text-blue-600 mt-2">Exportable a Excel →</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'reporte_recaudacion_global' %}"
+       class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-lg bg-green-100 text-green-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-dollar-sign"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="font-semibold text-gray-900">Recaudación</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                    Ingresos por rango de fechas, desglose por método y plan, comparativa mensual.
+                </p>
+                <p class="text-xs text-green-600 mt-2">Exportable a Excel →</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'reporte_asistencia' %}"
+       class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-check-to-slot"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="font-semibold text-gray-900">Asistencia</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                    Historial filtrable, tasa de asistencia y ranking de alumnos más constantes.
+                </p>
+                <p class="text-xs text-purple-600 mt-2">Exportable a Excel →</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'reporte_aptos_examen' %}"
+       class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-medal"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="font-semibold text-gray-900">Aptos para examen</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                    Alumnos que cumplen los requisitos: asistencias mínimas, certificado vigente y sin lesiones.
+                </p>
+                <p class="text-xs text-amber-600 mt-2">Exportable a Excel →</p>
+            </div>
+        </div>
+    </a>
+</div>
+{% endblock %}

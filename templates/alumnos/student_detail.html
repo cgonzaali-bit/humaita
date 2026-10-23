@@ -1,0 +1,571 @@
+{% extends "base.html" %}
+{% block title %}{{ alumno.apellido }}, {{ alumno.nombre }} · ArmyLock{% endblock %}
+
+{% block content %}
+<div x-data="{ tab: 'datos' }">
+
+    <!-- Cabecera del alumno -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="shrink-0">
+                {% if alumno.foto_perfil %}
+                    <img src="{{ alumno.foto_perfil.url }}"
+                         class="w-28 h-28 rounded-full object-cover border-4 border-amber-400 shadow">
+                {% else %}
+                    <div class="w-28 h-28 rounded-full bg-slate-200 flex items-center justify-center text-4xl text-slate-500 font-bold border-4 border-amber-400">
+                        {{ alumno.nombre|first }}{{ alumno.apellido|first }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            {{ alumno.nombre }} {{ alumno.apellido }}
+                        </h1>
+                        <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600">
+                            <span class="font-mono"><i class="fa-solid fa-id-card"></i> {{ alumno.rut }}</span>
+                            {% if alumno.telefono %}<span><i class="fa-solid fa-phone"></i> {{ alumno.telefono }}</span>{% endif %}
+                            {% if alumno.email %}<span><i class="fa-solid fa-envelope"></i> {{ alumno.email }}</span>{% endif %}
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 mt-3">
+                            {% include "alumnos/partials/_belt_badge.html" with cinturon=alumno.cinturon_actual grados=alumno.grados_cinturon %}
+                            {% include "alumnos/partials/_estado_badge.html" with estado=alumno.estado label=alumno.get_estado_display %}
+                            <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700">
+                                {{ alumno.get_categoria_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        {% if user.es_admin %}
+                        <a href="{% url 'student_promote' alumno.pk %}"
+                           class="btn-primary bg-amber-500 hover:bg-amber-600">
+                            <i class="fa-solid fa-medal"></i> Promover
+                        </a>
+                        <a href="{% url 'student_update' alumno.pk %}" class="btn-secondary">
+                            <i class="fa-solid fa-pen"></i> Editar
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="border-b border-gray-100 flex overflow-x-auto">
+            <button @click="tab = 'datos'"
+                    :class="tab === 'datos' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap hover:text-amber-600 transition">
+                <i class="fa-solid fa-user"></i> Datos
+            </button>
+            <button @click="tab = 'salud'"
+                    :class="tab === 'salud' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap hover:text-amber-600 transition">
+                <i class="fa-solid fa-heart-pulse"></i> Salud
+                {% if enfermedades or alergias or lesiones %}
+                <span class="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-red-100 text-red-700">
+                    {{ enfermedades.count|add:alergias.count|add:lesiones.count }}
+                </span>
+                {% endif %}
+            </button>
+            <button @click="tab = 'cinturones'"
+                    :class="tab === 'cinturones' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap hover:text-amber-600 transition">
+                <i class="fa-solid fa-medal"></i> Cinturones
+            </button>
+            <button @click="tab = 'pagos'"
+                    :class="tab === 'pagos' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap hover:text-amber-600 transition">
+                <i class="fa-solid fa-dollar-sign"></i> Pagos
+            </button>
+            <button @click="tab = 'asistencia'"
+                    :class="tab === 'asistencia' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap hover:text-amber-600 transition">
+                <i class="fa-solid fa-calendar-check"></i> Asistencia
+            </button>
+            <button @click="tab = 'eventos'"
+                    :class="tab === 'eventos' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                <i class="fa-solid fa-trophy"></i> Eventos
+            </button>
+        </div>
+
+        <div class="p-6">
+            <!-- TAB: DATOS -->
+            <div x-show="tab === 'datos'" x-cloak>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Información personal</h3>
+                        <dl class="space-y-2 text-sm">
+                            <div class="flex justify-between border-b border-dashed py-1.5">
+                                <dt class="text-gray-500">Fecha de nacimiento</dt>
+                                <dd class="font-medium">{{ alumno.fecha_nacimiento|date:"d/m/Y" }}</dd>
+                            </div>
+                            <div class="flex justify-between border-b border-dashed py-1.5">
+                                <dt class="text-gray-500">Dirección</dt>
+                                <dd class="font-medium text-right">{{ alumno.direccion|default:"—" }}</dd>
+                            </div>
+                            <div class="flex justify-between border-b border-dashed py-1.5">
+                                <dt class="text-gray-500">Fecha de inicio</dt>
+                                <dd class="font-medium">{{ alumno.fecha_inicio|date:"d/m/Y" }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Tutor / Responsable</h3>
+                        {% if alumno.tutor_nombre %}
+                        <dl class="space-y-2 text-sm">
+                            <div class="flex justify-between border-b border-dashed py-1.5">
+                                <dt class="text-gray-500">Nombre</dt>
+                                <dd class="font-medium">{{ alumno.tutor_nombre }}</dd>
+                            </div>
+                            <div class="flex justify-between border-b border-dashed py-1.5">
+                                <dt class="text-gray-500">Teléfono</dt>
+                                <dd class="font-medium">{{ alumno.tutor_telefono }}</dd>
+                            </div>
+                            <div class="flex justify-between border-b border-dashed py-1.5">
+                                <dt class="text-gray-500">Parentesco</dt>
+                                <dd class="font-medium">{{ alumno.tutor_parentesco }}</dd>
+                            </div>
+                        </dl>
+                        {% else %}
+                        <p class="text-sm text-gray-400 italic">No registrado (alumno mayor de edad)</p>
+                        {% endif %}
+                    </div>
+                    {% if alumno.notas %}
+                    <div class="md:col-span-2">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Notas del profesor</h3>
+                        <div class="bg-amber-50 border-l-4 border-amber-400 p-3 rounded text-sm text-gray-700">
+                            {{ alumno.notas|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+<!-- TAB: SALUD -->
+<div x-show="tab === 'salud'" x-cloak class="space-y-6">
+
+    <!-- Header con acciones -->
+    {% if user.es_admin %}
+    <div class="flex flex-wrap gap-2 pb-4 border-b border-gray-100">
+        <a href="{% url 'enfermedad_create' alumno.pk %}"
+           class="btn-secondary text-sm">
+            <i class="fa-solid fa-plus text-red-500"></i> Enfermedad
+        </a>
+        <a href="{% url 'alergia_create' alumno.pk %}"
+           class="btn-secondary text-sm">
+            <i class="fa-solid fa-plus text-amber-500"></i> Alergia
+        </a>
+        <a href="{% url 'lesion_create' alumno.pk %}"
+           class="btn-secondary text-sm">
+            <i class="fa-solid fa-plus text-orange-500"></i> Lesión
+        </a>
+        <a href="{% url 'contacto_form' alumno.pk %}"
+           class="btn-secondary text-sm">
+            <i class="fa-solid fa-phone-volume text-blue-500"></i>
+            {% if contacto_emergencia %}Editar{% else %}Agregar{% endif %} contacto
+        </a>
+        <a href="{% url 'certificado_form' alumno.pk %}"
+           class="btn-secondary text-sm">
+            <i class="fa-solid fa-file-medical text-green-500"></i>
+            {% if certificado %}Editar{% else %}Subir{% endif %} certificado
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Certificado médico destacado -->
+    {% if certificado %}
+    <div class="rounded-lg p-4 border
+        {% if certificado.estado_alerta == 'VENCIDO' %}bg-red-50 border-red-300
+        {% elif certificado.estado_alerta == 'CRITICO' %}bg-amber-50 border-amber-300
+        {% elif certificado.estado_alerta == 'PROXIMO' %}bg-yellow-50 border-yellow-300
+        {% else %}bg-green-50 border-green-300{% endif %}">
+        <div class="flex items-start justify-between gap-3">
+            <div>
+                <h3 class="text-sm font-semibold flex items-center gap-2
+                    {% if certificado.estado_alerta == 'VENCIDO' %}text-red-800
+                    {% elif certificado.estado_alerta == 'CRITICO' %}text-amber-800
+                    {% elif certificado.estado_alerta == 'PROXIMO' %}text-yellow-800
+                    {% else %}text-green-800{% endif %}">
+                    <i class="fa-solid fa-file-medical"></i>
+                    Certificado médico —
+                    {% if certificado.estado_alerta == 'VENCIDO' %}
+                        VENCIDO (hace {{ certificado.dias_para_vencer|cut:"-" }} días)
+                    {% elif certificado.estado_alerta == 'CRITICO' %}
+                        Vence en {{ certificado.dias_para_vencer }} días
+                    {% elif certificado.estado_alerta == 'PROXIMO' %}
+                        Vence en {{ certificado.dias_para_vencer }} días
+                    {% else %}
+                        Vigente ({{ certificado.dias_para_vencer }} días restantes)
+                    {% endif %}
+                </h3>
+                <p class="text-xs text-gray-600 mt-1">
+                    Emitido: {{ certificado.fecha_emision|date:"d/m/Y" }} ·
+                    Vence: {{ certificado.fecha_vencimiento|date:"d/m/Y" }}
+                    {% if certificado.apto_para_competir %}
+                    · <span class="text-green-700 font-medium">Apto para competir</span>
+                    {% endif %}
+                </p>
+                {% if certificado.medico %}
+                <p class="text-xs text-gray-500 mt-1">Dr(a). {{ certificado.medico }}</p>
+                {% endif %}
+            </div>
+            <div class="flex flex-col gap-1 items-end">
+                <a href="{{ certificado.archivo.url }}" target="_blank"
+                   class="text-xs text-blue-600 hover:underline">
+                    <i class="fa-solid fa-eye"></i> Ver
+                </a>
+                {% if user.es_admin %}
+                <form method="post" action="{% url 'certificado_delete' certificado.pk %}"
+                      onsubmit="return confirm('¿Eliminar el certificado médico?')">
+                    {% csrf_token %}
+                    <button type="submit" class="text-xs text-red-600 hover:underline">
+                        <i class="fa-solid fa-trash"></i> Eliminar
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="rounded-lg p-4 border border-gray-200 bg-gray-50 text-center text-sm text-gray-500">
+        <i class="fa-solid fa-file-medical text-2xl mb-1 text-gray-300"></i>
+        <p>Sin certificado médico registrado.</p>
+    </div>
+    {% endif %}
+
+    <!-- Enfermedades -->
+    <div>
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-virus text-red-500"></i> Enfermedades
+            <span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">{{ enfermedades.count }}</span>
+        </h3>
+        {% if enfermedades %}
+        <div class="space-y-2">
+            {% for e in enfermedades %}
+            <div class="border rounded-lg p-3
+                {% if e.gravedad == 'GRAVE' and e.activa %}border-red-300 bg-red-50
+                {% elif not e.activa %}border-gray-200 bg-gray-50 opacity-60
+                {% else %}border-gray-200{% endif %}">
+                <div class="flex justify-between items-start gap-3">
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">
+                            {{ e.nombre }}
+                            {% if not e.activa %}
+                            <span class="text-xs text-gray-400 italic">(inactiva)</span>
+                            {% endif %}
+                        </p>
+                        {% if e.descripcion %}
+                        <p class="text-xs text-gray-600 mt-1">{{ e.descripcion }}</p>
+                        {% endif %}
+                        {% if e.medicamentos %}
+                        <p class="text-xs text-blue-600 mt-1">
+                            <i class="fa-solid fa-pills"></i> {{ e.medicamentos }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="text-xs px-2 py-0.5 rounded-full
+                            {% if e.gravedad == 'GRAVE' %}bg-red-200 text-red-800
+                            {% elif e.gravedad == 'MODERADA' %}bg-amber-200 text-amber-800
+                            {% else %}bg-gray-200 text-gray-700{% endif %}">
+                            {{ e.get_gravedad_display }}
+                        </span>
+                        {% if user.es_admin %}
+                        <div class="flex gap-2 mt-1">
+                            <a href="{% url 'enfermedad_update' e.pk %}"
+                               class="text-xs text-gray-500 hover:text-amber-600">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            <form method="post" action="{% url 'enfermedad_delete' e.pk %}"
+                                  class="inline" onsubmit="return confirm('¿Eliminar enfermedad?')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs text-gray-500 hover:text-red-600">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 italic py-4 text-center bg-gray-50 rounded-lg">
+            Sin enfermedades registradas.
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Alergias -->
+    <div>
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Alergias
+            <span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">{{ alergias.count }}</span>
+        </h3>
+        {% if alergias %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {% for a in alergias %}
+            <div class="border rounded-lg p-3
+                {% if a.severidad == 'GRAVE' %}border-red-300 bg-red-50{% else %}border-gray-200{% endif %}">
+                <div class="flex justify-between items-start gap-2">
+                    <div>
+                        <p class="font-medium text-sm">
+                            {{ a.descripcion }}
+                            {% if a.requiere_epipen %}
+                            <span class="text-xs bg-red-600 text-white px-1.5 py-0.5 rounded ml-1">
+                                <i class="fa-solid fa-syringe"></i> EpiPen
+                            </span>
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ a.get_tipo_display }} · {{ a.get_severidad_display }}
+                        </p>
+                    </div>
+                    {% if user.es_admin %}
+                    <div class="flex gap-1">
+                        <a href="{% url 'alergia_update' a.pk %}"
+                           class="text-xs text-gray-400 hover:text-amber-600">
+                            <i class="fa-solid fa-pen"></i>
+                        </a>
+                        <form method="post" action="{% url 'alergia_delete' a.pk %}"
+                              class="inline" onsubmit="return confirm('¿Eliminar alergia?')">
+                            {% csrf_token %}
+                            <button type="submit" class="text-xs text-gray-400 hover:text-red-600">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 italic py-4 text-center bg-gray-50 rounded-lg">
+            Sin alergias registradas.
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Lesiones -->
+    <div>
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-crutch text-orange-500"></i> Lesiones
+            <span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">{{ lesiones.count }}</span>
+        </h3>
+        {% if lesiones %}
+        <div class="space-y-2">
+            {% for l in lesiones %}
+            <div class="border rounded-lg p-3
+                {% if l.estado == 'ACTIVA' %}border-red-200 bg-red-50
+                {% elif l.estado == 'EN_RECUPERACION' %}border-amber-200 bg-amber-50
+                {% else %}border-gray-200{% endif %}">
+                <div class="flex justify-between items-start gap-3">
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">{{ l.get_zona_cuerpo_display }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ l.descripcion }}</p>
+                        <p class="text-xs text-gray-400 mt-1">
+                            {{ l.fecha_lesion|date:"d/m/Y" }} ·
+                            {{ l.dias_desde_lesion }} días ·
+                            {{ l.get_estado_display }}
+                        </p>
+                    </div>
+                    {% if user.es_admin %}
+                    <div class="flex gap-1">
+                        <a href="{% url 'lesion_update' l.pk %}"
+                           class="text-xs text-gray-400 hover:text-amber-600">
+                            <i class="fa-solid fa-pen"></i>
+                        </a>
+                        <form method="post" action="{% url 'lesion_delete' l.pk %}"
+                              class="inline" onsubmit="return confirm('¿Eliminar lesión?')">
+                            {% csrf_token %}
+                            <button type="submit" class="text-xs text-gray-400 hover:text-red-600">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 italic py-4 text-center bg-gray-50 rounded-lg">
+            Sin lesiones registradas.
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Contacto de emergencia -->
+    <div>
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-phone-volume text-blue-500"></i> Contacto de emergencia
+        </h3>
+        {% if contacto_emergencia %}
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="font-medium text-blue-900">
+                {{ contacto_emergencia.nombre }}
+                <span class="text-xs text-blue-700">({{ contacto_emergencia.parentesco }})</span>
+                {% if contacto_emergencia.es_tutor_legal %}
+                <span class="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded ml-1">Tutor legal</span>
+                {% endif %}
+            </p>
+            <p class="text-sm text-blue-700 mt-1">
+                <i class="fa-solid fa-phone"></i> {{ contacto_emergencia.telefono }}
+                {% if contacto_emergencia.telefono_alternativo %}
+                · <i class="fa-solid fa-mobile"></i> {{ contacto_emergencia.telefono_alternativo }}
+                {% endif %}
+            </p>
+            {% if contacto_emergencia.notas %}
+            <p class="text-xs text-blue-600 mt-2 italic">{{ contacto_emergencia.notas }}</p>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 italic py-4 text-center bg-gray-50 rounded-lg">
+            Sin contacto de emergencia registrado.
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+            <!-- TAB: CINTURONES -->
+            <div x-show="tab === 'cinturones'" x-cloak>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase">Historial de promociones</h3>
+                    {% if user.es_admin %}
+                    <a href="{% url 'student_promote' alumno.pk %}" class="btn-primary text-sm bg-amber-500 hover:bg-amber-600">
+                        <i class="fa-solid fa-plus"></i> Nueva promoción
+                    </a>
+                    {% endif %}
+                </div>
+                {% if historial_cinturones %}
+                <div class="relative border-l-2 border-amber-300 ml-3 space-y-5">
+                    {% for h in historial_cinturones %}
+                    <div class="ml-5 relative">
+                        <div class="absolute -left-[27px] top-1 w-4 h-4 rounded-full bg-amber-400 border-2 border-white shadow"></div>
+                        <p class="font-medium text-sm">
+                            {{ h.get_cinturon_anterior_display }} → <strong>{{ h.get_cinturon_nuevo_display }}</strong>
+                            <span class="text-xs text-gray-500">({{ h.grados }}º grado)</span>
+                        </p>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                            {{ h.fecha_promocion|date:"d/m/Y" }}
+                            {% if h.instructor %} · por {{ h.instructor.get_full_name|default:h.instructor.username }}{% endif %}
+                        </p>
+                        {% if h.observaciones %}
+                        <p class="text-xs text-gray-600 mt-1 italic">{{ h.observaciones }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400 italic text-center py-8">
+                    Aún no hay promociones registradas.
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- TAB: PAGOS -->
+            <div x-show="tab === 'pagos'" x-cloak>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Últimos 12 pagos</h3>
+                {% if pagos %}
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Período</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Plan</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Monto</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Estado</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for p in pagos %}
+                        <tr>
+                            <td class="px-3 py-2">{{ p.mes }}/{{ p.anio }}</td>
+                            <td class="px-3 py-2 text-gray-500">{{ p.plan.nombre|default:"—" }}</td>
+                            <td class="px-3 py-2 font-medium">${{ p.monto }}</td>
+                            <td class="px-3 py-2">
+                                <span class="px-2 py-0.5 rounded-full text-xs
+                                    {% if p.estado == 'PAGADO' %}bg-green-100 text-green-700
+                                    {% elif p.estado == 'PENDIENTE' %}bg-amber-100 text-amber-700
+                                    {% elif p.estado == 'ATRASADO' %}bg-red-100 text-red-700
+                                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                    {{ p.get_estado_display }}
+                                </span>
+                            </td>
+                            <td class="px-3 py-2 text-gray-500">{{ p.fecha_pago|date:"d/m/Y"|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-sm text-gray-400 italic text-center py-8">
+                    No hay pagos registrados.
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- TAB: ASISTENCIA -->
+            <div x-show="tab === 'asistencia'" x-cloak>
+                <a href="{% url 'estadisticas_alumno' alumno.pk %}" class="btn-secondary text-sm mb-3 inline-flex">
+                    <i class="fa-solid fa-chart-line"></i> Ver estadísticas completas
+                </a>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Últimas 20 asistencias</h3>
+                {% if asistencias %}
+                <div class="space-y-1">
+                    {% for a in asistencias %}
+                    <div class="flex items-center justify-between border-b border-dashed py-2 text-sm">
+                        <div>
+                            <span class="font-medium">{{ a.fecha|date:"d/m/Y" }}</span>
+                            <span class="text-gray-500 ml-2">{{ a.clase.nombre }}</span>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded-full {% if a.presente %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                            {% if a.presente %}Presente{% else %}Ausente{% endif %}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400 italic text-center py-8">
+                    Sin registros de asistencia.
+                </p>
+                {% endif %}
+            </div>
+           <!-- TAB: EVENTOS --> 
+            <div x-show="tab === 'eventos'" x-cloak>
+                <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Eventos y competencias</h3>
+                {% if inscripciones %}
+                <div class="space-y-2">
+                    {% for i in inscripciones %}
+                    <a href="{% url 'evento_detail' i.evento.pk %}"
+                    class="flex items-center justify-between border rounded-lg p-3 hover:bg-gray-50">
+                        <div>
+                            <p class="font-medium text-sm">{{ i.evento.nombre }}</p>
+                            <p class="text-xs text-gray-500">
+                                {{ i.evento.get_tipo_display }} · {{ i.evento.fecha|date:"d/m/Y" }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            {% if i.resultado %}
+                            <p class="text-sm font-medium">{{ i.get_resultado_display }}</p>
+                            {% endif %}
+                            <p class="text-xs text-gray-500">{{ i.get_estado_pago_display }}</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400 italic text-center py-8">
+                    Sin eventos registrados.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

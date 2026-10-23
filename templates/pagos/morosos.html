@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Morosos · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-red-500"></i> Morosos
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+            {{ morosos|length }} alumnos con deuda · Total: <strong class="text-red-600">${{ total_general|floatformat:0 }}</strong>
+        </p>
+    </div>
+</div>
+
+{% if morosos %}
+<div class="space-y-3">
+    {% for m in morosos %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div class="flex flex-wrap justify-between items-start gap-3 mb-3">
+            <div>
+                <a href="{% url 'student_detail' m.alumno.pk %}"
+                   class="font-medium text-gray-900 hover:text-blue-600">
+                    {{ m.alumno.apellido }}, {{ m.alumno.nombre }}
+                </a>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    {{ m.alumno.get_cinturon_actual_display }} ·
+                    {{ m.alumno.dni }}
+                    {% if m.alumno.telefono %} · <i class="fa-solid fa-phone"></i> {{ m.alumno.telefono }}{% endif %}
+                </p>
+            </div>
+            <div class="text-right">
+                <p class="text-2xl font-bold text-red-600">${{ m.total_deuda|floatformat:0 }}</p>
+                <p class="text-xs text-gray-500">{{ m.pagos|length }} pago{{ m.pagos|length|pluralize }}</p>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+            {% for p in m.pagos %}
+            <a href="{% url 'pago_detail' p.pk %}"
+               class="text-xs px-3 py-1.5 bg-red-50 border border-red-200 rounded-full hover:bg-red-100 flex items-center gap-2">
+                <span>{{ p.periodo_display }}</span>
+                <span class="text-red-700 font-medium">${{ p.monto_final|floatformat:0 }}</span>
+                <span class="text-red-500">{{ p.dias_atraso }}d</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+    <i class="fa-solid fa-party-horn text-5xl text-green-500 mb-3"></i>
+    <p class="text-lg font-medium text-gray-700">¡No hay morosos!</p>
+    <p class="text-sm text-gray-500 mt-1">Todos los pagos están al día.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Promover a {{ alumno.nombre }} · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">Promoción de cinturón</h1>
+        <p class="text-sm text-gray-500 mt-1">
+            Alumno: <strong>{{ alumno.nombre }} {{ alumno.apellido }}</strong>
+        </p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+            <div>
+                <p class="text-xs text-gray-500 mb-1">Cinturón actual</p>
+                {% include "alumnos/partials/_belt_badge.html" with cinturon=alumno.cinturon_actual grados=alumno.grados_cinturon %}
+            </div>
+            <i class="fa-solid fa-arrow-right text-gray-300 text-xl"></i>
+            <div>
+                <p class="text-xs text-gray-500 mb-1">Nuevo cinturón</p>
+                <span class="text-sm italic text-amber-600">por definir en el formulario →</span>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Nuevo cinturón <span class="text-red-500">*</span>
+                </label>
+                {{ form.cinturon_nuevo }}
+                {% if form.cinturon_nuevo.errors %}<p class="text-xs text-red-600 mt-1">{{ form.cinturon_nuevo.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Grados (0-4)</label>
+                {{ form.grados }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Fecha de promoción <span class="text-red-500">*</span>
+                </label>
+                {{ form.fecha_promocion }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+                {{ form.observaciones }}
+            </div>
+
+            <div class="flex justify-end gap-3 pt-3">
+                <a href="{% url 'student_detail' alumno.pk %}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary bg-amber-500 hover:bg-amber-600">
+                    <i class="fa-solid fa-medal"></i> Registrar promoción
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

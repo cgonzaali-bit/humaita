@@ -1,0 +1,202 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ArmyLock{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .form-input {
+            @apply w-full px-3 py-2 border border-gray-300 rounded-lg
+                   focus:outline-none focus:ring-2 focus:ring-blue-500
+                   focus:border-transparent transition;
+        }
+        .btn-primary {
+            @apply inline-flex items-center gap-2 px-4 py-2 bg-blue-600
+                   hover:bg-blue-700 text-white rounded-lg font-medium transition;
+        }
+        .btn-secondary {
+            @apply inline-flex items-center gap-2 px-4 py-2 bg-gray-100
+                   hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition;
+        }
+        .btn-danger {
+            @apply inline-flex items-center gap-2 px-4 py-2 bg-red-600
+                   hover:bg-red-700 text-white rounded-lg font-medium transition;
+        }
+    </style>
+    <script>
+        // CSRF para HTMX
+        document.body && document.body.addEventListener('htmx:configRequest', (e) => {
+            e.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+    </script>
+</head>
+<body class="h-full bg-gray-50 text-gray-800" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+<nav class="bg-slate-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+            <div class="flex items-center gap-6">
+                <a href="{% url 'dashboard' %}" class="flex items-center gap-2 font-bold text-lg">
+                    <i class="fa-solid fa-hand-fist text-amber-400"></i> ArmyLock
+                </a>
+                <a href="{% url 'dashboard_global' %}" class="hover:text-amber-400 transition">
+                    <i class="fa-solid fa-gauge-high"></i> Dashboard
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'student_list' %}" class="hover:text-amber-400 transition">
+                    <i class="fa-solid fa-users"></i> Alumnos
+                </a>
+                <a href="{% url 'health_dashboard' %}" class="hover:text-amber-400 transition">
+                    <i class="fa-solid fa-heart-pulse"></i> Salud
+                    {% if alertas_count %}
+                    <span class="ml-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                        {{ alertas_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'payments_dashboard' %}" class="hover:text-amber-400 transition">
+                    <i class="fa-solid fa-dollar-sign"></i> Pagos
+                </a>
+                <a href="{% url 'evento_list' %}" class="hover:text-amber-400 transition">
+                    <i class="fa-solid fa-trophy"></i> Eventos
+                </a>
+                <a href="{% url 'calendario' %}" class="hover:text-amber-400 transition">
+                    <i class="fa-solid fa-calendar-days"></i> Asistencia
+                </a>
+
+                <a href="{% url 'reportes_index' %}" class="hover:text-amber-400 transition">
+                    <i class="fa-solid fa-chart-line"></i> Reportes
+                </a>
+                {% if user.es_admin %}
+                <a href="{% url 'staff_list' %}" class="hover:text-amber-400 transition">
+                    <i class="fa-solid fa-user-shield"></i> Staff
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+            {% if user.is_authenticated %}
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-300">
+                    {{ user.get_full_name|default:user.username }}
+                    <span class="text-xs bg-amber-500 text-black px-2 py-0.5 rounded-full ml-1">
+                        {{ user.get_role_display }}
+                    </span>
+                </span>
+                <a href="{% url 'logout' %}" class="text-sm hover:text-amber-400">
+                    <i class="fa-solid fa-right-from-bracket"></i> Salir
+                </a>
+            </div>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+            <div class="flex items-center gap-4">
+                <!-- Buscador (Ctrl+K) -->
+                <button onclick="document.dispatchEvent(new KeyboardEvent('keydown', {key: 'k', ctrlKey: true}))"
+                        class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-gray-300">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    <span>Buscar...</span>
+                    <kbd class="text-xs px-1.5 py-0.5 bg-slate-700 rounded">Ctrl+K</kbd>
+                </button>
+
+                <!-- Badge de alertas -->
+                {% if alertas_total > 0 %}
+                <a href="{% url 'health_dashboard' %}"
+                class="relative text-amber-400 hover:text-amber-300">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                        {{ alertas_total }}
+                    </span>
+                </a>
+                {% endif %}
+
+
+            </div>
+            {% endif %} 
+
+
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    {% if messages %}
+        <div class="space-y-2 mb-4">
+            {% for message in messages %}
+                <div class="p-3 rounded-lg
+                    {% if message.tags == 'success' %}bg-green-100 text-green-800
+                    {% elif message.tags == 'error' %}bg-red-100 text-red-800
+                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Búsqueda global Ctrl+K -->
+<div id="modal-busqueda"
+     x-data="{ abierto: false }"
+     x-init="
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                abierto = !abierto;
+                if (abierto) {
+                    setTimeout(() => {
+                        document.getElementById('input-busqueda').focus();
+                    }, 50);
+                }
+            }
+            if (e.key === 'Escape') abierto = false;
+        });
+     "
+     x-show="abierto"
+     x-cloak
+     @click.self="abierto = false"
+     class="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-24">
+
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden"
+         @click.stop>
+        <div class="p-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                <input id="input-busqueda"
+                       type="text"
+                       name="q"
+                       placeholder="Buscar alumnos, eventos, pagos..."
+                       autocomplete="off"
+                       hx-get="{% url 'busqueda_global' %}"
+                       hx-trigger="keyup changed delay:250ms"
+                       hx-target="#resultados-globales"
+                       class="flex-1 outline-none text-gray-800">
+                <kbd class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-500">ESC</kbd>
+            </div>
+        </div>
+        <div id="resultados-globales" class="max-h-96 overflow-y-auto">
+            <div class="p-6 text-center text-gray-400">
+                <p class="text-sm">Busca alumnos, eventos o pagos...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function cerrarBusqueda() {
+    const modal = document.getElementById('modal-busqueda');
+    modal.dispatchEvent(new CustomEvent('cerrar'));
+    // Cerrar el Alpine state
+    if (window.Alpine) {
+        Alpine.$data(modal).abierto = false;
+    }
+}
+</script>
+
+</body>
+</html>

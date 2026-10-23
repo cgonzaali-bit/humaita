@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Check-in rápido · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold flex items-center gap-2">
+            <i class="fa-solid fa-check-to-slot text-green-600"></i> Check-in rápido
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+            Busca por nombre o RUT y registra la asistencia con un click.
+        </p>
+    </div>
+
+    <!-- Selector de clase y fecha -->
+    <form method="get" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <div class="md:col-span-2">
+                <label class="block text-xs text-gray-500 mb-1">Clase</label>
+                <select name="clase_id" onchange="this.form.submit()" class="form-input">
+                    {% for c in clases %}
+                    <option value="{{ c.pk }}" {% if clase and clase.pk == c.pk %}selected{% endif %}>
+                        {{ c.get_dia_semana_display }} {{ c.hora_inicio|time:"H:i" }} - {{ c.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Fecha</label>
+                <input type="date" name="fecha" value="{{ fecha|date:'Y-m-d' }}"
+                       onchange="this.form.submit()" class="form-input">
+            </div>
+        </div>
+    </form>
+
+    <!-- Buscador -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+        <input type="hidden" name="clase_id" value="{{ clase.pk|default:'' }}">
+        <input type="hidden" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+        {{ form.q }}
+        <div id="resultados-busqueda" class="mt-3"></div>
+    </div>
+
+    <!-- Ya presentes -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="font-semibold text-gray-800">
+                <i class="fa-solid fa-users-check text-green-600"></i>
+                Presentes hoy ({{ asistencias.count }})
+            </h2>
+            {% if clase %}
+            <a href="{% url 'asistencia_manual' %}?clase_id={{ clase.pk }}&fecha={{ fecha|date:'Y-m-d' }}"
+               class="text-xs text-blue-600 hover:underline">
+                Marcar asistencia manual →
+            </a>
+            {% endif %}
+        </div>
+        {% if asistencias %}
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {% for a in asistencias %}
+            <div class="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold">
+                    {{ a.alumno.nombre|first }}{{ a.alumno.apellido|first }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate">{{ a.alumno.nombre }} {{ a.alumno.apellido }}</p>
+                    <p class="text-xs text-gray-500">{{ a.hora_registro|time:"H:i" }}</p>
+                </div>
+                <button hx-post="{% url 'marcar_presente' a.alumno.pk %}"
+                        hx-vals='{"clase_id": "{{ clase.pk }}", "fecha": "{{ fecha|date:"Y-m-d" }}"}'
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-confirm="¿Quitar la asistencia de {{ a.alumno.nombre }}?"
+                        hx-on::after-request="window.location.reload()"
+                        class="text-red-500 hover:text-red-700">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 italic text-center py-4">
+            Nadie registrado aún. Busca arriba para hacer check-in.
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

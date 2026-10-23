@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Salud · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-heart-pulse text-red-500"></i> Panel de Salud
+    </h1>
+    <p class="text-sm text-gray-500 mt-1">
+        Alertas médicas y certificados de la academia.
+    </p>
+</div>
+
+<!-- Resumen -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-red-500 p-4">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Certificados vencidos</p>
+        <p class="text-3xl font-bold text-red-600 mt-1">{{ certificados_vencidos.count }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-amber-500 p-4">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Por vencer (30d)</p>
+        <p class="text-3xl font-bold text-amber-600 mt-1">{{ certificados_por_vencer.count }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-orange-500 p-4">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Lesiones activas</p>
+        <p class="text-3xl font-bold text-orange-600 mt-1">{{ lesiones_activas.count }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-red-700 p-4">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Alergias graves</p>
+        <p class="text-3xl font-bold text-red-700 mt-1">{{ alergias_graves.count }}</p>
+    </div>
+</div>
+
+<!-- Alerta EpiPen -->
+{% if epipen %}
+<div class="bg-red-50 border-l-4 border-red-600 p-4 rounded-lg mb-6">
+    <h2 class="font-semibold text-red-800 flex items-center gap-2 mb-2">
+        <i class="fa-solid fa-syringe"></i> Alumnos que requieren EpiPen
+    </h2>
+    <ul class="text-sm space-y-1">
+        {% for a in epipen %}
+        <li>
+            <a href="{% url 'student_detail' a.alumno.pk %}" class="text-red-700 hover:underline font-medium">
+                {{ a.alumno.apellido }}, {{ a.alumno.nombre }}
+            </a>
+            <span class="text-red-600">— {{ a.descripcion }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Certificados vencidos -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-circle-xmark text-red-500"></i>
+                Certificados vencidos
+            </h2>
+            <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                {{ certificados_vencidos.count }}
+            </span>
+        </div>
+        <div class="p-2 max-h-96 overflow-y-auto">
+            {% if certificados_vencidos %}
+                {% for c in certificados_vencidos %}
+                <a href="{% url 'student_detail' c.alumno.pk %}"
+                   class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition">
+                    <div>
+                        <p class="font-medium text-sm text-gray-800">
+                            {{ c.alumno.apellido }}, {{ c.alumno.nombre }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            Venció hace {{ c.dias_para_vencer|cut:"-" }} días
+                        </p>
+                    </div>
+                    <span class="text-xs text-red-600 font-mono">
+                        {{ c.fecha_vencimiento|date:"d/m/Y" }}
+                    </span>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-gray-400 italic p-4 text-center">
+                    Sin certificados vencidos 🎉
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Certificados por vencer -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-clock text-amber-500"></i>
+                Certificados por vencer (30 días)
+            </h2>
+            <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                {{ certificados_por_vencer.count }}
+            </span>
+        </div>
+        <div class="p-2 max-h-96 overflow-y-auto">
+            {% if certificados_por_vencer %}
+                {% for c in certificados_por_vencer %}
+                <a href="{% url 'student_detail' c.alumno.pk %}"
+                   class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition">
+                    <div>
+                        <p class="font-medium text-sm text-gray-800">
+                            {{ c.alumno.apellido }}, {{ c.alumno.nombre }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            Vence en {{ c.dias_para_vencer }} días
+                        </p>
+                    </div>
+                    <span class="text-xs text-amber-600 font-mono">
+                        {{ c.fecha_vencimiento|date:"d/m/Y" }}
+                    </span>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-gray-400 italic p-4 text-center">
+                    Todos vigentes por ahora.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lesiones activas -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-crutch text-orange-500"></i>
+                Lesiones activas
+            </h2>
+            <span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                {{ lesiones_activas.count }}
+            </span>
+        </div>
+        <div class="p-2 max-h-96 overflow-y-auto">
+            {% if lesiones_activas %}
+                {% for l in lesiones_activas %}
+                <a href="{% url 'student_detail' l.alumno.pk %}"
+                   class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition">
+                    <div>
+                        <p class="font-medium text-sm text-gray-800">
+                            {{ l.alumno.apellido }}, {{ l.alumno.nombre }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            {{ l.get_zona_cuerpo_display }} — {{ l.dias_desde_lesion }} días
+                        </p>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full
+                        {% if l.estado == 'ACTIVA' %}bg-red-100 text-red-700
+                        {% else %}bg-amber-100 text-amber-700{% endif %}">
+                        {{ l.get_estado_display }}
+                    </span>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-gray-400 italic p-4 text-center">
+                    Sin lesiones activas 🥋
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Alumnos activos sin certificado -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-medical text-gray-500"></i>
+                Alumnos activos sin certificado
+            </h2>
+            <span class="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                {{ alumnos_sin_certificado.count }}
+            </span>
+        </div>
+        <div class="p-2 max-h-96 overflow-y-auto">
+            {% if alumnos_sin_certificado %}
+                {% for a in alumnos_sin_certificado|slice:":15" %}
+                <a href="{% url 'student_detail' a.pk %}"
+                   class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition">
+                    <p class="text-sm text-gray-800">
+                        {{ a.apellido }}, {{ a.nombre }}
+                    </p>
+                    <span class="text-xs text-gray-500">
+                        {{ a.get_cinturon_actual_display }}
+                    </span>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-gray-400 italic p-4 text-center">
+                    Todos los activos tienen certificado ✅
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Enfermedades graves -->
+{% if enfermedades_graves %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 mt-6">
+    <div class="p-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
+            Enfermedades graves activas
+        </h2>
+    </div>
+    <div class="p-2 max-h-72 overflow-y-auto">
+        {% for e in enfermedades_graves %}
+        <a href="{% url 'student_detail' e.alumno.pk %}"
+           class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition">
+            <div>
+                <p class="font-medium text-sm text-gray-800">
+                    {{ e.alumno.apellido }}, {{ e.alumno.nombre }}
+                </p>
+                <p class="text-xs text-gray-500">{{ e.nombre }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

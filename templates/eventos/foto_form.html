@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Subir foto</h1>
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+        {% csrf_token %}
+        <div>
+            <label class="block text-sm font-medium mb-1">Imagen *</label>
+            {{ form.imagen }}
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Título</label>
+            {{ form.titulo }}
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Descripción</label>
+            {{ form.descripcion }}
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t">
+            <a href="{% url 'evento_detail' evento.pk %}" class="btn-secondary">Cancelar</a>
+            <button class="btn-primary"><i class="fa-solid fa-upload"></i> Subir</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

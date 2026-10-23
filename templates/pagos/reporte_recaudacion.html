@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Reporte de recaudación</h1>
+    <a href="{% url 'reporte_recaudacion_pdf' %}?desde={{ desde }}&hasta={{ hasta }}"
+       target="_blank" class="btn-secondary">
+        <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+    </a>
+</div>
+
+<form method="get" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-5">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Desde</label>
+            <input type="date" name="desde" value="{{ desde }}" class="form-input">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Hasta</label>
+            <input type="date" name="hasta" value="{{ hasta }}" class="form-input">
+        </div>
+        <button class="btn-primary"><i class="fa-solid fa-search"></i> Consultar</button>
+    </div>
+</form>
+
+<!-- KPIs -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Total recaudado</p>
+        <p class="text-3xl font-bold text-green-600 mt-1">${{ total|floatformat:0 }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Cantidad de pagos</p>
+        <p class="text-3xl font-bold text-gray-800 mt-1">{{ cantidad }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Promedio por pago</p>
+        <p class="text-3xl font-bold text-gray-800 mt-1">
+            {% if cantidad %}${{ total|floatformat:0|add:"0" }}{% else }}$0{% endif %}
+        </p>
+    </div>
+</div>
+
+<!-- Desglose por método -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+    <div class="p-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-800">Desglose por método de pago</h2>
+    </div>
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Método</th>
+                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Pagos</th>
+                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Total</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for item in por_metodo %}
+            <tr>
+                <td class="px-4 py-2">{{ item.metodo_display }}</td>
+                <td class="px-4 py-2 text-right">{{ item.cantidad }}</td>
+                <td class="px-4 py-2 text-right font-medium">${{ item.total|floatformat:0 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center py-6 text-gray-400">Sin datos</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Detalle -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="p-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-800">Detalle de pagos</h2>
+    </div>
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Fecha</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Recibo</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Alumno</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Período</th>
+                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Método</th>
+                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Monto</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for p in pagos %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-2 text-gray-600">{{ p.fecha_pago|date:"d/m/Y" }}</td>
+                <td class="px-4 py-2 font-mono text-xs">{{ p.numero_recibo|default:"—" }}</td>
+                <td class="px-4 py-2">
+                    <a href="{% url 'pago_detail' p.pk %}" class="hover:text-blue-600">
+                        {{ p.alumno.apellido }}, {{ p.alumno.nombre }}
+                    </a>
+                </td>
+                <td class="px-4 py-2 text-gray-600">{{ p.periodo_display }}</td>
+                <td class="px-4 py-2 text-gray-600">{{ p.get_metodo_pago_display }}</td>
+                <td class="px-4 py-2 text-right font-medium">${{ p.monto_final|floatformat:0 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center py-8 text-gray-400">
+                Sin pagos en el rango seleccionado
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

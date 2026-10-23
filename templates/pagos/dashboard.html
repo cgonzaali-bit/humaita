@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Pagos · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <i class="fa-solid fa-dollar-sign text-green-600"></i> Panel de Pagos
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+            Resumen financiero de la academia.
+        </p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{% url 'generar_mensualidades' %}" class="btn-secondary">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Generar mensualidades
+        </a>
+        <a href="{% url 'pago_create' %}" class="btn-primary">
+            <i class="fa-solid fa-plus"></i> Registrar pago
+        </a>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Recaudado {{ mes_actual }}</p>
+        <p class="text-3xl font-bold text-green-600 mt-1">${{ total_pagado_mes|floatformat:0 }}</p>
+        <p class="text-xs mt-2
+            {% if variacion >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+            {% if variacion >= 0 %}<i class="fa-solid fa-arrow-up"></i>
+            {% else %}<i class="fa-solid fa-arrow-down"></i>{% endif %}
+            {{ variacion|floatformat:1 }}% vs mes anterior
+        </p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Pendiente del mes</p>
+        <p class="text-3xl font-bold text-amber-600 mt-1">${{ total_pendiente_mes|floatformat:0 }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-red-500 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Pagos atrasados</p>
+        <p class="text-3xl font-bold text-red-600 mt-1">{{ morosos_count }}</p>
+        <a href="{% url 'morosos' %}" class="text-xs text-red-600 hover:underline mt-2 inline-block">
+            Ver listado →
+        </a>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Mes anterior</p>
+        <p class="text-3xl font-bold text-gray-700 mt-1">${{ total_pagado_mes_ant|floatformat:0 }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Gráfico de recaudación -->
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h2 class="font-semibold text-gray-800 mb-4">Recaudación últimos 12 meses</h2>
+        <canvas id="chartRecaudacion" height="80"></canvas>
+    </div>
+
+    <!-- Próximos vencimientos -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100">
+            <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-clock text-amber-500"></i>
+                Próximos vencimientos
+            </h2>
+        </div>
+        <div class="p-2 max-h-72 overflow-y-auto">
+            {% if proximos_vencimientos %}
+                {% for p in proximos_vencimientos %}
+                <a href="{% url 'pago_detail' p.pk %}"
+                   class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium">{{ p.alumno.apellido }}, {{ p.alumno.nombre }}</p>
+                        <p class="text-xs text-gray-500">{{ p.periodo_display }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold">${{ p.monto_final|floatformat:0 }}</p>
+                        <p class="text-xs text-amber-600">en {{ p.dias_para_vencer }}d</p>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-gray-400 italic p-4 text-center">
+                    Sin vencimientos próximos 🎉
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Morosos y pagos recientes -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+                Morosos
+            </h2>
+            <a href="{% url 'morosos' %}" class="text-xs text-blue-600 hover:underline">
+                Ver todos →
+            </a>
+        </div>
+        <div class="p-2 max-h-80 overflow-y-auto">
+            {% if morosos %}
+                {% for p in morosos %}
+                <a href="{% url 'pago_detail' p.pk %}"
+                   class="flex items-center justify-between p-3 hover:bg-red-50 rounded-lg transition">
+                    <div>
+                        <p class="text-sm font-medium">{{ p.alumno.apellido }}, {{ p.alumno.nombre }}</p>
+                        <p class="text-xs text-gray-500">{{ p.periodo_display }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-red-600">${{ p.monto_final|floatformat:0 }}</p>
+                        <p class="text-xs text-red-500">{{ p.dias_atraso }}d atrasado</p>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-gray-400 italic p-4 text-center">
+                    Sin morosos 🎉
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-4 border-b border-gray-100">
+            <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-receipt text-green-500"></i>
+                Pagos recientes
+            </h2>
+        </div>
+        <div class="p-2 max-h-80 overflow-y-auto">
+            {% for p in pagos_recientes %}
+            <a href="{% url 'pago_detail' p.pk %}"
+               class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+                <div>
+                    <p class="text-sm font-medium">{{ p.alumno.apellido }}, {{ p.alumno.nombre }}</p>
+                    <p class="text-xs text-gray-500">
+                        {{ p.periodo_display }} · {{ p.get_metodo_pago_display }}
+                    </p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-semibold text-green-600">${{ p.monto_final|floatformat:0 }}</p>
+                    <p class="text-xs text-gray-400">{{ p.fecha_pago|date:"d/m" }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const data = {{ recaudacion_mensual|safe }};
+new Chart(document.getElementById('chartRecaudacion'), {
+    type: 'bar',
+    data: {
+        labels: data.map(d => d.label),
+        datasets: [{
+            label: 'Recaudación ($)',
+            data: data.map(d => d.total),
+            backgroundColor: '#10b981',
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: v => '$' + v.toLocaleString('es-CL'),
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

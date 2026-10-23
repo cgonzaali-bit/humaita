@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}{{ evento.nombre }} · ArmyLock{% endblock %}
+
+{% block content %}
+<div x-data="{ tab: 'info' }">
+
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="flex flex-wrap justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                        {% if evento.tipo == 'COMPETENCIA' %}bg-amber-100 text-amber-700
+                        {% elif evento.tipo == 'SEMINARIO' %}bg-blue-100 text-blue-700
+                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ evento.get_tipo_display }}
+                    </span>
+                    <span class="text-xs px-2 py-0.5 rounded-full
+                        {% if evento.estado == 'ABIERTO' %}bg-green-100 text-green-700
+                        {% else %}bg-slate-100 text-slate-600{% endif %}">
+                        {{ evento.get_estado_display }}
+                    </span>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ evento.nombre }}</h1>
+                <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
+                    <span><i class="fa-solid fa-calendar"></i> {{ evento.fecha|date:"d/m/Y H:i" }}</span>
+                    {% if evento.lugar %}<span><i class="fa-solid fa-location-dot"></i> {{ evento.lugar }}</span>{% endif %}
+                    <span><i class="fa-solid fa-dollar-sign"></i>
+                        {% if evento.costo > 0 %}${{ evento.costo|floatformat:0 }}{% else %}Gratis{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                {% if user.es_admin %}
+                <a href="{% url 'evento_update' evento.pk %}" class="btn-secondary">
+                    <i class="fa-solid fa-pen"></i> Editar
+                </a>
+                {% if evento.inscripciones_abiertas and not evento.esta_lleno %}
+                <a href="{% url 'inscripcion_create' evento.pk %}" class="btn-primary">
+                    <i class="fa-solid fa-user-plus"></i> Inscribir
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Inscritos</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">
+                {{ evento.total_inscritos }}{% if evento.cupo_maximo %}<span class="text-sm text-gray-400"> / {{ evento.cupo_maximo }}</span>{% endif %}
+            </p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Recaudado</p>
+            <p class="text-2xl font-bold text-green-600 mt-1">${{ total_pagado|floatformat:0 }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Pendiente</p>
+            <p class="text-2xl font-bold text-amber-600 mt-1">${{ total_pendiente|floatformat:0 }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <p class="text-xs text-gray-500 uppercase font-semibold">Fotos</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ fotos.count }}</p>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="border-b border-gray-100 flex overflow-x-auto">
+            <button @click="tab = 'info'"
+                    :class="tab === 'info' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                <i class="fa-solid fa-circle-info"></i> Información
+            </button>
+            <button @click="tab = 'inscritos'"
+                    :class="tab === 'inscritos' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                <i class="fa-solid fa-users"></i> Inscritos ({{ inscripciones.count }})
+            </button>
+            {% if evento.tipo == 'COMPETENCIA' or evento.tipo == 'EXAMEN' %}
+            <button @click="tab = 'resultados'"
+                    :class="tab === 'resultados' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                <i class="fa-solid fa-medal"></i> Resultados ({{ con_resultado.count }})
+            </button>
+            {% endif %}
+            <button @click="tab = 'fotos'"
+                    :class="tab === 'fotos' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500'"
+                    class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                <i class="fa-solid fa-images"></i> Fotos ({{ fotos.count }})
+            </button>
+        </div>
+
+        <div class="p-6">
+            <!-- Info -->
+            <div x-show="tab === 'info'" x-cloak>
+                {% if evento.descripcion %}
+                <div class="prose prose-sm max-w-none">
+                    {{ evento.descripcion|linebreaks }}
+                </div>
+                {% else %}
+                <p class="text-gray-400 italic text-center py-8">
+                    Sin descripción adicional.
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Inscritos -->
+            <div x-show="tab === 'inscritos'" x-cloak>
+                {% if user.es_admin and evento.inscripciones_abiertas and not evento.esta_lleno %}
+                <div class="flex justify-end gap-2 mb-4">
+                    <a href="{% url 'inscripcion_masiva' evento.pk %}" class="btn-secondary text-sm">
+                        <i class="fa-solid fa-users-rectangle"></i> Inscripción masiva
+                    </a>
+                    <a href="{% url 'inscripcion_create' evento.pk %}" class="btn-primary text-sm">
+                        <i class="fa-solid fa-user-plus"></i> Inscribir
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if inscripciones %}
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Alumno</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Estado pago</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold text-gray-500">Monto</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Resultado</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold text-gray-500">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for i in inscripciones %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2">
+                                <a href="{% url 'student_detail' i.alumno.pk %}"
+                                   class="font-medium hover:text-blue-600">
+                                    {{ i.alumno.apellido }}, {{ i.alumno.nombre }}
+                                </a>
+                            </td>
+                            <td class="px-3 py-2">
+                                <span class="text-xs px-2 py-0.5 rounded-full
+                                    {% if i.estado_pago == 'PAGADO' %}bg-green-100 text-green-700
+                                    {% elif i.estado_pago == 'PENDIENTE' %}bg-amber-100 text-amber-700
+                                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    {{ i.get_estado_pago_display }}
+                                </span>
+                            </td>
+                            <td class="px-3 py-2 text-right">${{ i.monto_pagado|floatformat:0 }}</td>
+                            <td class="px-3 py-2 text-sm">
+                                {% if i.resultado %}
+                                <span class="font-medium">{{ i.get_resultado_display }}</span>
+                                {% if i.posicion %} · {{ i.posicion }}°{% endif %}
+                                {% else %}—{% endif %}
+                            </td>
+                            <td class="px-3 py-2 text-right space-x-1">
+                                {% if i.estado_pago == 'PENDIENTE' %}
+                                <form method="post" action="{% url 'inscripcion_marcar_pagado' i.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button class="text-gray-500 hover:text-green-600" title="Marcar pagado">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if evento.tipo == 'COMPETENCIA' or evento.tipo == 'EXAMEN' %}
+                                <a href="{% url 'resultado_update' i.pk %}" class="text-gray-500 hover:text-amber-600" title="Resultado">
+                                    <i class="fa-solid fa-medal"></i>
+                                </a>
+                                {% endif %}
+                                <form method="post" action="{% url 'inscripcion_delete' i.pk %}" class="inline"
+                                      onsubmit="return confirm('¿Eliminar inscripción?')">
+                                    {% csrf_token %}
+                                    <button class="text-gray-500 hover:text-red-600" title="Eliminar">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-gray-400 italic text-center py-8">Sin inscripciones.</p>
+                {% endif %}
+            </div>
+
+            <!-- Resultados -->
+            {% if evento.tipo == 'COMPETENCIA' or evento.tipo == 'EXAMEN' %}
+            <div x-show="tab === 'resultados'" x-cloak>
+                {% if con_resultado %}
+                <div class="space-y-2">
+                    {% for i in con_resultado %}
+                    <div class="flex items-center justify-between border rounded-lg p-3
+                        {% if i.resultado == 'ORO' %}border-amber-300 bg-amber-50
+                        {% elif i.resultado == 'PLATA' %}border-gray-300 bg-gray-50
+                        {% elif i.resultado == 'BRONCE' %}border-orange-300 bg-orange-50
+                        {% else %}border-gray-200{% endif %}">
+                        <div>
+                            <p class="font-medium">{{ i.alumno.apellido }}, {{ i.alumno.nombre }}</p>
+                            <p class="text-xs text-gray-500">
+                                {{ i.categoria_competencia|default:"" }}
+                                {% if i.posicion %} · Posición {{ i.posicion }}°{% endif %}
+                            </p>
+                        </div>
+                        <span class="text-sm font-medium">{{ i.get_resultado_display }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-400 italic text-center py-8">Sin resultados registrados.</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Fotos -->
+            <div x-show="tab === 'fotos'" x-cloak>
+                {% if user.es_admin %}
+                <div class="flex justify-end mb-4">
+                    <a href="{% url 'foto_upload' evento.pk %}" class="btn-primary text-sm">
+                        <i class="fa-solid fa-upload"></i> Subir foto
+                    </a>
+                </div>
+                {% endif %}
+                {% if fotos %}
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {% for foto in fotos %}
+                    <div class="relative group">
+                        <img src="{{ foto.imagen.url }}" alt="{{ foto.titulo }}"
+                             class="w-full h-40 object-cover rounded-lg">
+                        {% if user.es_admin %}
+                        <form method="post" action="{% url 'foto_delete' foto.pk %}"
+                              class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition"
+                              onsubmit="return confirm('¿Eliminar foto?')">
+                            {% csrf_token %}
+                            <button class="bg-red-600 text-white rounded-full w-8 h-8 hover:bg-red-700">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% if foto.titulo %}
+                        <p class="text-xs text-gray-600 mt-1 truncate">{{ foto.titulo }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-400 italic text-center py-8">Sin fotos.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

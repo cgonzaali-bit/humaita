@@ -1,0 +1,97 @@
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    {% if page_obj.object_list %}
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Alumno</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">RUT</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Cinturón</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Categoría</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Estado</th>
+                <th class="px-4 py-3 text-right font-semibold text-gray-600">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for alumno in page_obj %}
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        {% if alumno.foto_perfil %}
+                            <img src="{{ alumno.foto_perfil.url }}"
+                                 class="w-10 h-10 rounded-full object-cover border-2 border-gray-200">
+                        {% else %}
+                            <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-semibold">
+                                {{ alumno.nombre|first }}{{ alumno.apellido|first }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <a href="{% url 'student_detail' alumno.pk %}"
+                               class="font-medium text-gray-900 hover:text-blue-600">
+                                {{ alumno.apellido }}, {{ alumno.nombre }}
+                            </a>
+                            {% if alumno.telefono %}
+                            <div class="text-xs text-gray-500">
+                                <i class="fa-solid fa-phone text-[10px]"></i> {{ alumno.telefono }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-gray-600 font-mono text-xs">{{ alumno.rut }}</td>
+                <td class="px-4 py-3">
+                    {% include "alumnos/partials/_belt_badge.html" with cinturon=alumno.cinturon_actual grados=alumno.grados_cinturon %}
+                </td>
+                <td class="px-4 py-3 text-gray-600">{{ alumno.get_categoria_display }}</td>
+                <td class="px-4 py-3">
+                    {% include "alumnos/partials/_estado_badge.html" with estado=alumno.estado label=alumno.get_estado_display %}
+                </td>
+                <td class="px-4 py-3 text-right">
+                    <a href="{% url 'student_detail' alumno.pk %}"
+                       class="text-gray-500 hover:text-blue-600 mx-1" title="Ver">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                    {% if user.es_admin %}
+                    <a href="{% url 'student_update' alumno.pk %}"
+                       class="text-gray-500 hover:text-amber-600 mx-1" title="Editar">
+                        <i class="fa-solid fa-pen"></i>
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="text-center py-16 text-gray-500">
+        <i class="fa-solid fa-user-slash text-4xl mb-3 text-gray-300"></i>
+        <p>No se encontraron alumnos con esos filtros.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center items-center gap-2 mt-4">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}"
+           hx-get="?page={{ page_obj.previous_page_number }}"
+           hx-target="#lista-alumnos"
+           hx-push-url="true"
+           class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50">
+            <i class="fa-solid fa-chevron-left"></i>
+        </a>
+    {% endif %}
+    <span class="text-sm text-gray-600">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}"
+           hx-get="?page={{ page_obj.next_page_number }}"
+           hx-target="#lista-alumnos"
+           hx-push-url="true"
+           class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50">
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+    {% endif %}
+</div>
+{% endif %}

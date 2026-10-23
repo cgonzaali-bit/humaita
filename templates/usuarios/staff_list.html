@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Staff · ArmyLock{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <i class="fa-solid fa-user-shield text-purple-600"></i> Staff
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+            {{ total_staff }} miembros · {{ total_instructores }} instructores activos
+        </p>
+    </div>
+    {% if user.es_super_admin %}
+    <a href="{% url 'staff_create' %}" class="btn-primary">
+        <i class="fa-solid fa-user-plus"></i> Nuevo miembro
+    </a>
+    {% endif %}
+</div>
+
+<!-- Desglose por nivel -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-blue-500 p-4">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Monitores</p>
+        <p class="text-2xl font-bold text-blue-600 mt-1">{{ por_nivel.MONITOR }}</p>
+        <p class="text-xs text-gray-500 mt-1">Cinturón azul</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-purple-500 p-4">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Instructores</p>
+        <p class="text-2xl font-bold text-purple-600 mt-1">{{ por_nivel.INSTRUCTOR }}</p>
+        <p class="text-xs text-gray-500 mt-1">Cinturón morado</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-amber-700 p-4">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Instr. Avanzados</p>
+        <p class="text-2xl font-bold text-amber-800 mt-1">{{ por_nivel.INSTRUCTOR_AVANZADO }}</p>
+        <p class="text-xs text-gray-500 mt-1">Cinturón marrón</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border-l-4 border-black p-4">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Profesores</p>
+        <p class="text-2xl font-bold text-black mt-1">{{ por_nivel.PROFESOR }}</p>
+        <p class="text-xs text-gray-500 mt-1">Cinturón negro</p>
+    </div>
+</div>
+
+<!-- Filtros -->
+<form method="get" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-5">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <input type="text" name="q" value="{{ q }}"
+               placeholder="Buscar por nombre o email..."
+               class="form-input md:col-span-2">
+        <select name="rol" class="form-input">
+            <option value="">Todos los roles</option>
+            {% for val, label in roles %}
+            <option value="{{ val }}" {% if rol == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="cinturon" class="form-input">
+            <option value="">Todos los cinturones</option>
+            {% for val, label in cinturones %}
+            <option value="{{ val }}" {% if cinturon == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="estado" class="form-input">
+            <option value="">Todos</option>
+            <option value="activo" {% if estado == 'activo' %}selected{% endif %}>Activos</option>
+            <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+        </select>
+    </div>
+    <div class="mt-3 flex justify-end gap-2">
+        <a href="{% url 'staff_list' %}" class="btn-secondary text-sm">Limpiar</a>
+        <button class="btn-primary text-sm"><i class="fa-solid fa-filter"></i> Filtrar</button>
+    </div>
+</form>
+
+<!-- Grid -->
+{% if page_obj.object_list %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for s in page_obj %}
+    <a href="{% url 'staff_detail' s.pk %}"
+       class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition overflow-hidden {% if not s.activo %}opacity-60{% endif %}">
+        <div class="p-4">
+            <div class="flex items-start gap-3">
+                {% if s.foto_perfil %}
+                <img src="{{ s.foto_perfil.url }}"
+                     class="w-14 h-14 rounded-full object-cover border-2 border-gray-200">
+                {% else %}
+                <div class="w-14 h-14 rounded-full bg-slate-200 flex items-center justify-center text-lg font-bold text-slate-600">
+                    {{ s.first_name|first }}{{ s.last_name|first }}
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-gray-900 truncate">
+                        {{ s.get_full_name|default:s.username }}
+                    </h3>
+                    <p class="text-xs text-gray-500 truncate">{{ s.email|default:"Sin email" }}</p>
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        <span class="text-xs px-2 py-0.5 rounded-full
+                            {% if s.role == 'SUPER_ADMIN' %}bg-slate-900 text-white
+                            {% elif s.role == 'ADMIN' %}bg-blue-100 text-blue-700
+                            {% else %}bg-purple-100 text-purple-700{% endif %}">
+                            {{ s.get_role_display }}
+                        </span>
+                        {% if s.cinturon_actual != 'BLANCO' %}
+                        <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                            {% if s.cinturon_actual == 'AZUL' %}bg-blue-500 text-white
+                            {% elif s.cinturon_actual == 'MORADO' %}bg-purple-500 text-white
+                            {% elif s.cinturon_actual == 'MARRON' %}bg-amber-800 text-white
+                            {% else %}bg-black text-white{% endif %}">
+                            {{ s.get_cinturon_actual_display }} {{ s.grados_cinturon }}º
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if s.nivel_instructor %}
+            <div class="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                <span class="text-gray-600">
+                    <i class="fa-solid fa-medal text-amber-500"></i>
+                    {{ s.nivel_instructor_display }}
+                </span>
+                <span class="text-gray-500">
+                    {{ s.num_clases }} clase{{ s.num_clases|pluralize }}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        {% if not s.activo %}
+        <div class="bg-gray-100 text-center text-xs text-gray-600 py-1.5">
+            <i class="fa-solid fa-pause"></i> Inactivo
+        </div>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center items-center gap-2 mt-6">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&rol={{ rol }}&cinturon={{ cinturon }}&estado={{ estado }}"
+       class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50">
+        <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    {% endif %}
+    <span class="text-sm text-gray-600">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&rol={{ rol }}&cinturon={{ cinturon }}&estado={{ estado }}"
+       class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50">
+        <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-400">
+    <i class="fa-solid fa-user-shield text-5xl mb-3 text-gray-300"></i>
+    <p>No hay miembros del staff con esos filtros.</p>
+</div>
+{% endif %}
+{% endblock %}

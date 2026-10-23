@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Reporte de recaudación</h1>
+        <p class="text-sm text-gray-500 mt-1">Comparativa y desglose de ingresos.</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{% url 'reporte_recaudacion_global_excel' %}?desde={{ desde }}&hasta={{ hasta }}"
+           class="btn-primary">
+            <i class="fa-solid fa-file-excel"></i> Exportar Excel
+        </a>
+        <a href="{% url 'reportes_index' %}" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<form method="get" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-5">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Desde</label>
+            <input type="date" name="desde" value="{{ desde }}" class="form-input">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Hasta</label>
+            <input type="date" name="hasta" value="{{ hasta }}" class="form-input">
+        </div>
+        <button class="btn-primary">
+            <i class="fa-solid fa-search"></i> Consultar
+        </button>
+    </div>
+</form>
+
+<!-- KPIs -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Total recaudado</p>
+        <p class="text-3xl font-bold text-green-600 mt-1">${{ total|floatformat:0 }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Cantidad de pagos</p>
+        <p class="text-3xl font-bold text-gray-900 mt-1">{{ cantidad }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Promedio por pago</p>
+        <p class="text-3xl font-bold text-gray-900 mt-1">${{ promedio|floatformat:0 }}</p>
+    </div>
+</div>
+
+<!-- Gráfico comparativa mensual -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+    <h2 class="font-semibold text-gray-800 mb-4">Comparativa mensual</h2>
+    <canvas id="chartComparativa" height="80"></canvas>
+</div>
+
+<!-- Desglose -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-4 border-b border-gray-100">
+            <h2 class="font-semibold text-gray-800">Por método de pago</h2>
+        </div>
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Método</th>
+                    <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Pagos</th>
+                    <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Total</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for item in por_metodo %}
+                <tr>
+                    <td class="px-4 py-2">{{ item.metodo_display }}</td>
+                    <td class="px-4 py-2 text-right">{{ item.cantidad }}</td>
+                    <td class="px-4 py-2 text-right font-medium">${{ item.total|floatformat:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center py-6 text-gray-400">Sin datos</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-4 border-b border-gray-100">
+            <h2 class="font-semibold text-gray-800">Por plan</h2>
+        </div>
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Plan</th>
+                    <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Pagos</th>
+                    <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Total</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for item in por_plan %}
+                <tr>
+                    <td class="px-4 py-2">{{ item.plan__nombre|default:"Sin plan" }}</td>
+                    <td class="px-4 py-2 text-right">{{ item.cantidad }}</td>
+                    <td class="px-4 py-2 text-right font-medium">${{ item.total|floatformat:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center py-6 text-gray-400">Sin datos</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+new Chart(document.getElementById('chartComparativa'), {
+    type: 'bar',
+    data: {
+        labels: {{ por_mes_data|safe }}.map(d => d.label),
+        datasets: [{
+            label: 'Recaudación',
+            data: {{ por_mes_data|safe }}.map(d => d.total),
+            backgroundColor: '#10b981',
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString('es-CL') } } }
+    }
+});
+</script>
+{% endblock %}

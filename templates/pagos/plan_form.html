@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">{{ titulo }}</h1>
+    <form method="post" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                {{ form.nombre }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Monto mensual *</label>
+                {{ form.monto }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de alumno</label>
+                {{ form.tipo_alumno }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Frecuencia</label>
+                {{ form.frecuencia }}
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                {{ form.descripcion }}
+            </div>
+            <div class="md:col-span-2 flex flex-wrap gap-6 pt-2">
+                <label class="flex items-center gap-2 text-sm">
+                    {{ form.es_familiar }} Es plan familiar
+                </label>
+                <label class="flex items-center gap-2 text-sm">
+                    {{ form.activo }} Activo
+                </label>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Descuento familiar (%)
+                </label>
+                {{ form.descuento_familiar_porcentaje }}
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <a href="{% url 'plan_list' %}" class="btn-secondary">Cancelar</a>
+            <button class="btn-primary"><i class="fa-solid fa-save"></i> Guardar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
